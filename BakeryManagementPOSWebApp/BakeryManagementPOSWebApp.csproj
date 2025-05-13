@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\Components\" />
+    <Folder Include="Components\Database\Shared\" />
   </ItemGroup>
 
 </Project>
