@@ -1,0 +1,59 @@
+﻿<Alert Color="@Color" Dismissable=@Dismissable>﻿
+	@switch (Type)
+	{
+		case MessageType.Loading:
+			<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> <strong>Loading...</strong> <text>This might take a moment.</text>
+			break;
+		case MessageType.Info:
+			<Icon Name="IconName.InfoCircleFill" class="me-2"></Icon>
+			<strong>@Title</strong> @Message
+			break;
+		case MessageType.Warning:
+			<Icon Name="IconName.ExclamationTriangleFill" class="me-2"></Icon>
+			<strong>@Title</strong> @Message
+			break;
+		case MessageType.Error:
+			<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+			@if (ErrorNumber is not null)
+			{
+				<strong>ERROR @ErrorNumber: </strong>
+			}
+			else
+			{
+				<strong>ERROR:</strong>
+			}
+			@Message
+			break;
+		default:
+			<strong>@Title</strong> @Message
+			break;
+	}
+</Alert>
+
+@code {
+	[Parameter]
+	public MessageType Type { get; set; }
+
+	[Parameter]
+	public AlertColor Color { get; set; }
+
+	[Parameter]
+	public bool Dismissable { get; set; } = false;
+
+	[Parameter]
+	public string Title { get; set; } = string.Empty;
+
+	[Parameter]
+	public string? ErrorNumber { get; set; } = null;
+
+	[Parameter]
+	public string Message { get; set; } = string.Empty;
+
+	public enum MessageType
+	{
+		Loading,
+		Info,
+		Warning,
+		Error
+	}
+}
