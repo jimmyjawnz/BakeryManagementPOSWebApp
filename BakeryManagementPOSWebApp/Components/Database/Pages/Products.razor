@@ -8,12 +8,11 @@
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-<TrashModal 
-	@ref="trashModal"
+<TrashModal @ref="trashModal"
 	ObjectName="@product.Name"
 	SubmitMethod="Submit"/>
 
-<Modal @ref="addModal" Title="Add Product"
+<Modal @ref="productModal" Title="@ModalTitle"
 	   UseStaticBackdrop="true"
 	   CloseOnEscape="false"
 	   IsVerticallyCentered="true"
@@ -56,7 +55,7 @@
 				</div>
 				<div class="form-group row">
 						<div class="col-md-12">
-							<Button @onclick="@HideAddModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+							<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
 							<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Add Product</Button>
 						</div>
 				</div>
@@ -64,30 +63,92 @@
 		</BodyTemplate>
 </Modal>
 
-<Button @onclick="() => ShowRemoveModal(product)">Remove Modal</Button>
-<Button @onclick=ShowAddModal>Add Modal</Button>
+<Button @onclick=ShowAddModal>Add Product</Button>
+
+@if (products is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	@if (products.Count == 0)
+	{
+		<UserMessage Color="AlertColor.Danger" Type="MessageType.Error" ErrorNumber="100" Message="No existing products found in database." />
+	}
+	<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th width="15%">Name</th>
+				<th width="15%">Price</th>
+				<th width="40%">Description</th>
+				<th width="15%">Group</th>
+				<th width="5%" class="text-center">Availability</th>
+				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			@foreach (var item in products)
+			{
+				@if (item.DateDeleted is null)
+				{
+					<tr @ondblclick="(() => ShowInfoModal(item))">
+						<td>@item.Name</td>
+						<td>@String.Format("{0:C2}", item.Price)</td>
+						<td>@item.Description</td>
+						<td></td>
+						<td class="text-center">
+							@if (item.IsAvailable)
+							{
+								<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
+							}
+							else
+							{
+								<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
+							}
+						</td>
+						<td class="text-center">
+							<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
+							<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+}
+
 
 @code {
 	private TrashModal trashModal { get; set; } = default!;
-	private Modal addModal { get; set; } = default!;
+
+	private Modal productModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
 
 	private EditContext editContext { get; set; } = default!;
 	private Product product { get; set; } = new();
 
 	private List<Product>? products { get; set; } = new();
+	private Button RefreshButton { get; set; } = default!;
 
 	private Button submitButton { get; set; } = default!;
 
 	protected override async Task OnInitializedAsync()
 	{
-		await LoadProducts();
+		await LoadData();
 	}
 
-	public async Task LoadProducts()
+	public async Task LoadData()
 	{
 		products = null;
+		await Task.Delay(1000);
+		products = new();
+	}
 
-		await Task.Delay(100);
+	private async Task RefreshData()
+	{
+		RefreshButton.ShowLoading("Refreshing...");
+		await LoadData();
+		RefreshButton.HideLoading();
 	}
 
 	private async Task ShowRemoveModal(Product item)
@@ -106,18 +167,35 @@
 		submitButton.ShowLoading("Loading...");
 		await Task.Delay(1000);
 		submitButton.HideLoading();
-		await HideAddModal();
+		await HideModal();
 	}
 
 	private async Task ShowAddModal()
 	{
 		product = new();
+		ModalTitle = "Add Product";
 		editContext = new EditContext(product);
-		await addModal.ShowAsync();
+		await productModal.ShowAsync();
 	}
 
-	private async Task HideAddModal()
+	private async Task ShowEditModal(Product item)
 	{
-		await addModal.HideAsync();
+		product = item;
+		ModalTitle = "Edit Product";
+		editContext = new EditContext(product);
+		await productModal.ShowAsync();
+	}
+
+	private async Task ShowInfoModal(Product item)
+	{
+		product = item;
+		ModalTitle = "Product Info";
+		editContext = new EditContext(product);
+		await productModal.ShowAsync();
+	}
+
+	private async Task HideModal()
+	{
+		await productModal.HideAsync();
 	}
 }
