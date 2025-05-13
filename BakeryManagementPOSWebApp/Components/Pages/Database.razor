@@ -1,0 +1,36 @@
+﻿@page "/db"
+
+<PageTitle>Database</PageTitle>
+<h2>Database</h2>
+
+<div class="bg-dark-subtle p-3 rounded-5 mt-5">
+    <h3 class="text-center mb-3 text-black">Entities</h3>
+    <div style="display: flex;" class="flex-row flex-wrap justify-content-around">
+        @foreach (var endpoint in Endpoints)
+        {
+            <div class="text-center flex-column mb-3" style="display: flex; min-width: 20rem; min-height: 10rem;">
+                <Button To="@endpoint.Href" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
+                    @endpoint.Text
+                </Button>
+                <Button To="@(endpoint.Href+"/trash")" Color="ButtonColor.Dark" Outline=true Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 2rem; align-content: center; margin-top: 0.5rem;">
+                    @endpoint.Text Trash
+                </Button>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    private List<BreadcrumbItem> Endpoints = new();
+
+    protected override void OnInitialized()
+    {
+        Endpoints = new List<BreadcrumbItem> {
+            new BreadcrumbItem { Text = "Products", Href = "/db/products" },
+            new BreadcrumbItem { Text = "Orders", Href = "/db/orders" },
+            new BreadcrumbItem { Text = "Employees", Href = "/db/employees" },
+            new BreadcrumbItem { Text = "Customers", Href = "/db/customers" }
+        };
+    }
+}
