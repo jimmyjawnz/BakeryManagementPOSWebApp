@@ -13,25 +13,111 @@
 	ObjectName="@product.Name"
 	SubmitMethod="Submit"/>
 
-<Button @onclick=ShowRemoveModal>Remove Modal</Button>
+<Modal @ref="addModal" Title="Add Product"
+	   UseStaticBackdrop="true"
+	   CloseOnEscape="false"
+	   IsVerticallyCentered="true"
+	   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="AddProduct" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Availability: </label>
+					<div class="col-md-10">
+					<Switch @bind-Value="@product.IsAvailable" Class="mt-2" />
+					<ValidationMessage For="() => product.IsAvailable" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Name: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+					<TextInput @bind-Value="@product.Name" Placeholder="Enter product name" />
+						<ValidationMessage For="() => product.Name" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Price: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<CurrencyInput TValue="decimal" @bind-Value="@product.Price" Placeholder="Enter price" />
+					<ValidationMessage For="() => product.Price" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Description: </label>
+					<div class="col-md-10">
+					<TextInput @bind-Value="@product.Description" Placeholder="Enter product description" />
+						<ValidationMessage For="() => product.Description" />
+					</div>
+				</div>
+				<div class="form-group row">
+						<div class="col-md-12">
+							<Button @onclick="@HideAddModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+							<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Add Product</Button>
+						</div>
+				</div>
+			</EditForm>
+		</BodyTemplate>
+</Modal>
+
+<Button @onclick="() => ShowRemoveModal(product)">Remove Modal</Button>
+<Button @onclick=ShowAddModal>Add Modal</Button>
 
 @code {
 	private TrashModal trashModal { get; set; } = default!;
+	private Modal addModal { get; set; } = default!;
 
+	private EditContext editContext { get; set; } = default!;
 	private Product product { get; set; } = new();
+
+	private List<Product>? products { get; set; } = new();
+
+	private Button submitButton { get; set; } = default!;
 
 	protected override async Task OnInitializedAsync()
 	{
-		await Task.Delay(1);
+		await LoadProducts();
 	}
 
-	private async Task ShowRemoveModal()
+	public async Task LoadProducts()
 	{
+		products = null;
+
+		await Task.Delay(100);
+	}
+
+	private async Task ShowRemoveModal(Product item)
+	{
+		product = item;
 		await trashModal.Show();
 	}
 
 	private async Task Submit()
 	{
-		await Task.Delay(0);
+		await Task.Delay(10);
+	}
+
+	private async Task SubmitForm()
+	{
+		submitButton.ShowLoading("Loading...");
+		await Task.Delay(1000);
+		submitButton.HideLoading();
+		await HideAddModal();
+	}
+
+	private async Task ShowAddModal()
+	{
+		product = new();
+		editContext = new EditContext(product);
+		await addModal.ShowAsync();
+	}
+
+	private async Task HideAddModal()
+	{
+		await addModal.HideAsync();
 	}
 }
