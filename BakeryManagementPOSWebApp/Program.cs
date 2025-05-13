@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using BakeryManagementPOSWebApp.Components;
 using BakeryManagementPOSWebApp.Components.Account;
 using BakeryManagementPOSWebApp.Data;
+using BakeryManagementPOSWebApp.Data.Enities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,12 +29,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddIdentityCore<Employee>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
-
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
 
