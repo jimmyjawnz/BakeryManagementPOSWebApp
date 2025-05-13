@@ -1,0 +1,48 @@
+﻿<Modal @ref="@ModalRef" Title="@ModalTitle"
+UseStaticBackdrop="true"
+CloseOnEscape="false"
+IsVerticallyCentered="true"
+Size="ModalSize.Large">
+
+	<BodyTemplate>
+		<h2>Move <strong>@ObjectName</strong> to trash?</h2>
+		<p>This will be put into the trash.</p>
+		<div class="form-group row">
+			<div class="col-md-12">
+				<Button @onclick="HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+				<Button @ref="submitButton" @onclick="SubmitForm" Color="ButtonColor.Danger" Class="float-end me-2">Remove</Button>
+			</div>
+		</div>
+	</BodyTemplate>
+</Modal>
+
+@code {
+	[Parameter]
+	public Modal ModalRef { get; set; } = default!;
+	[Parameter]
+	public string ModalTitle { get; set; } = "Title";
+
+	[Parameter]
+	public string Type { get; set; } = "Normal";
+
+	[Parameter]
+	public string ObjectName { get; set; } = "Object";
+
+	[Parameter]
+	public Task SubmitMethod { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	private void SubmitForm()
+	{
+		submitButton.ShowLoading();
+		SubmitMethod?.Start();
+		SubmitMethod?.Wait();
+		submitButton.HideLoading();
+	}
+
+	private async Task HideModal()
+	{
+		await ModalRef.HideAsync();
+	}
+}
