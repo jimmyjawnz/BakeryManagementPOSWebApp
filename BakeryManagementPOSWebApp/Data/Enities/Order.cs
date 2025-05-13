@@ -1,4 +1,6 @@
-﻿namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
+﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
+
+namespace BakeryManagementPOSWebApp.Data.Enities
 {
     public class Order : Entity
     {
