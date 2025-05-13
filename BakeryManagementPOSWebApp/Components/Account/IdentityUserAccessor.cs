@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using BakeryManagementPOSWebApp.Data;
+using BakeryManagementPOSWebApp.Data.Enities;
 
 namespace BakeryManagementPOSWebApp.Components.Account;
 
-internal sealed class IdentityUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager)
+internal sealed class IdentityUserAccessor(UserManager<Employee> userManager, IdentityRedirectManager redirectManager)
 {
-    public async Task<ApplicationUser> GetRequiredUserAsync(HttpContext context)
+    public async Task<Employee> GetRequiredUserAsync(HttpContext context)
     {
         var user = await userManager.GetUserAsync(context.User);
 

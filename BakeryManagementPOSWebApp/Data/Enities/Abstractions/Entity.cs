@@ -1,4 +1,4 @@
-﻿namespace BakeryManagementPOSWebApp.Data.Enities
+﻿namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
 {
     public abstract class Entity
     {

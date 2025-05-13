@@ -25,7 +25,7 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BakeryManagementPOSWebApp.Data.ApplicationUser", b =>
+            modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Employee", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -234,7 +234,7 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("BakeryManagementPOSWebApp.Data.ApplicationUser", null)
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Employee", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -243,7 +243,7 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("BakeryManagementPOSWebApp.Data.ApplicationUser", null)
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Employee", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -258,7 +258,7 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BakeryManagementPOSWebApp.Data.ApplicationUser", null)
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Employee", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -267,7 +267,7 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("BakeryManagementPOSWebApp.Data.ApplicationUser", null)
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Employee", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

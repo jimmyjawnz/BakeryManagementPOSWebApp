@@ -1,4 +1,3 @@
-using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;

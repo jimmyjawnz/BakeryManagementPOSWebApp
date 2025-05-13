@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
+using System.ComponentModel.DataAnnotations;
 
-namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
+namespace BakeryManagementPOSWebApp.Data.Enities
 {
     public class Customer : Entity
     {
