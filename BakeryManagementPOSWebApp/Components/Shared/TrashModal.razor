@@ -1,4 +1,4 @@
-﻿<Modal @ref="@ModalRef" Title="@ModalTitle"
+﻿<Modal @ref="ModalRef" Title="@Title"
 UseStaticBackdrop="true"
 CloseOnEscape="false"
 IsVerticallyCentered="true"
@@ -6,43 +6,52 @@ Size="ModalSize.Large">
 
 	<BodyTemplate>
 		<h2>Move <strong>@ObjectName</strong> to trash?</h2>
-		<p>This will be put into the trash.</p>
+		<p>@Text</p>
 		<div class="form-group row">
 			<div class="col-md-12">
-				<Button @onclick="HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
-				<Button @ref="submitButton" @onclick="SubmitForm" Color="ButtonColor.Danger" Class="float-end me-2">Remove</Button>
+				<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">@CancelText</Button>
+				<Button @ref="submitButton" @onclick="@Submit" Color="ButtonColor.Danger" Class="float-end me-2">@SubmitText</Button>
 			</div>
 		</div>
 	</BodyTemplate>
 </Modal>
 
 @code {
-	[Parameter]
 	public Modal ModalRef { get; set; } = default!;
-	[Parameter]
-	public string ModalTitle { get; set; } = "Title";
+	private Button submitButton { get; set; } = default!;
 
 	[Parameter]
-	public string Type { get; set; } = "Normal";
+	public string Title { get; set; } = "Are you sure?";
+
+	[Parameter]
+	public string Text { get; set; } = "This item will be put into the trash.";
 
 	[Parameter]
 	public string ObjectName { get; set; } = "Object";
 
 	[Parameter]
-	public Task SubmitMethod { get; set; } = default!;
+	public EventCallback SubmitMethod { get; set; }
 
-	private Button submitButton { get; set; } = default!;
+	[Parameter]
+	public string CancelText { get; set; } = "Cancel";
+	[Parameter]
+	public string SubmitText { get; set; } = "Confirm";
 
-	private void SubmitForm()
+	private async Task Submit()
 	{
-		submitButton.ShowLoading();
-		SubmitMethod?.Start();
-		SubmitMethod?.Wait();
-		submitButton.HideLoading();
+		submitButton.ShowLoading("Moving to trash...");
+		await SubmitMethod.InvokeAsync();
+		await Task.Delay(100);
+		await Hide();
 	}
 
-	private async Task HideModal()
+	public async Task Hide()
 	{
 		await ModalRef.HideAsync();
+	}
+
+	public async Task Show()
+	{
+		await ModalRef.ShowAsync();
 	}
 }

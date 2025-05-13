@@ -8,6 +8,30 @@
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-@code {
+<TrashModal 
+	@ref="trashModal"
+	ObjectName="@product.Name"
+	SubmitMethod="Submit"/>
 
+<Button @onclick=ShowRemoveModal>Remove Modal</Button>
+
+@code {
+	private TrashModal trashModal { get; set; } = default!;
+
+	private Product product { get; set; } = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Delay(1);
+	}
+
+	private async Task ShowRemoveModal()
+	{
+		await trashModal.Show();
+	}
+
+	private async Task Submit()
+	{
+		await Task.Delay(0);
+	}
 }
