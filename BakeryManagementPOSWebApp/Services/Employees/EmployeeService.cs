@@ -1,5 +1,6 @@
 ﻿using BakeryManagementPOSWebApp.Data;
 using BakeryManagementPOSWebApp.Data.Enities;
+using BakeryManagementPOSWebApp.Services.Customers;
 using Microsoft.EntityFrameworkCore;
 
 namespace BakeryManagementPOSWebApp.Services.Employees
@@ -7,9 +8,11 @@ namespace BakeryManagementPOSWebApp.Services.Employees
     public class EmployeeService
     {
         readonly ApplicationDbContext _dbContext;
-        public EmployeeService(ApplicationDbContext dbContext)
+        readonly CustomerService _customerService;
+        public EmployeeService(ApplicationDbContext dbContext, CustomerService customerService)
         {
             _dbContext = dbContext;
+            _customerService = customerService;
         }
 
         // Entity Specific
@@ -26,9 +29,27 @@ namespace BakeryManagementPOSWebApp.Services.Employees
             return await _dbContext.Employees.Where(p => p.DateDeleted != null).ToListAsync();
         }
 
-        public async Task<int> CreateEmployee(Employee Employee)
+        public async Task<int> CreateEmployee(Employee employee)
         {
-            await _dbContext.Employees.AddAsync(Employee);
+            // Get customer with the same PhoneNumber
+            Customer? linkedCustomer = await _customerService.GetCustomer(employee.PhoneNumber!);
+
+            // If no match then Create a new Customer
+            if (linkedCustomer is null)
+            {
+                linkedCustomer = await _customerService.CreateCustomer(new Customer()
+                {
+                    FirstName = employee.FirstName,
+                    LastName = employee.LastName,
+                    PhoneNumber = employee.PhoneNumber!,
+                    EmailAddress = employee.Email!
+                });
+            }
+
+            // Link the Employee to the Customer
+            employee.CustomerId = linkedCustomer.Id;
+
+            await _dbContext.Employees.AddAsync(employee);
             return await _dbContext.SaveChangesAsync();
         }
 

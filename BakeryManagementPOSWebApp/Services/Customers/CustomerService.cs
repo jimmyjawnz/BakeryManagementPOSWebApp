@@ -31,10 +31,11 @@ namespace BakeryManagementPOSWebApp.Services.Customers
             return await _dbContext.Customers.Where(p => p.DateDeleted != null).ToListAsync();
         }
 
-        public async Task<int> CreateCustomer(Customer customer)
+        public async Task<Customer> CreateCustomer(Customer customer)
         {
             await _dbContext.Customers.AddAsync(customer);
-            return await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
+            return customer;
         }
 
         public async Task<Customer> GetCustomer(int id)
@@ -42,9 +43,16 @@ namespace BakeryManagementPOSWebApp.Services.Customers
             return await _dbContext.Customers.Where(p => p.Id == id).FirstAsync();
         }
 
-        public async Task<Customer> GetCustomer(string phoneNumber)
+        public async Task<Customer?> GetCustomer(string phoneNumber)
         {
-            return await _dbContext.Customers.Where(p => p.PhoneNumber == phoneNumber).FirstAsync();
+            try
+            {
+                return await _dbContext.Customers.Where(p => p.PhoneNumber == phoneNumber).FirstAsync();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public async Task<int> UpdateCustomer(Customer customer)
