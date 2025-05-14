@@ -6,6 +6,7 @@ using BakeryManagementPOSWebApp.Components.Account;
 using BakeryManagementPOSWebApp.Data;
 using BakeryManagementPOSWebApp.Data.Enities;
 using BakeryManagementPOSWebApp.Services.Products;
+using BakeryManagementPOSWebApp.Services.Employees;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddBlazorBootstrap();
 
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<EmployeeService>();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
