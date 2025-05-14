@@ -4,6 +4,7 @@
 <title>Products</title>
 <h2>Products</h2>
 
+@inject NavigationManager NavigationManager
 @inject ProductService Service
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
@@ -211,11 +212,9 @@ else
 		products = await Service.GetExistingProducts();
 	}
 
-	private async Task RefreshData()
+	private void RefreshData()
 	{
-		RefreshButton.ShowLoading("Refreshing...");
-		await LoadData();
-		RefreshButton.HideLoading();
+		NavigationManager.Refresh(true);
 	}
 
 	private async Task ShowRemoveModal(Product item)
