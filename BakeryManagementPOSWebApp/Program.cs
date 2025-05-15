@@ -38,7 +38,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<Employee>(options => options.SignIn.RequireConfirmedAccount = false)
+builder.Services.AddIdentityCore<Employee>(options => 
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+        options.Password.RequiredLength = 4;
+        options.Password.RequiredUniqueChars = 0;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.Lockout.MaxFailedAccessAttempts = 10;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
