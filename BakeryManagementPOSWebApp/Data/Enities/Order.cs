@@ -4,10 +4,10 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 {
     public class Order : Entity
     {
-        public int OrderedByID { get; set; }
+        public int CustomerID { get; set; }
         public Customer? OrderedBy { get; set; }
 
-        public int? ProcessedByID { get; set; }
+        public int? EmployeeID { get; set; }
         public Employee? ProcessedBy { get; set; }
 
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
@@ -41,7 +41,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         {
             get
             {
-                return Id.ToString() + "-" + OrderedByID.ToString();
+                return Id.ToString() + "-" + CustomerID.ToString();
             }
         }
 

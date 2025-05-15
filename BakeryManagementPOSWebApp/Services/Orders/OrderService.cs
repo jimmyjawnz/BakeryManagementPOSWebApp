@@ -1,7 +1,6 @@
 ﻿using BakeryManagementPOSWebApp.Components.Database.Pages;
 using BakeryManagementPOSWebApp.Data;
 using BakeryManagementPOSWebApp.Data.Enities;
-using BakeryManagementPOSWebApp.Migrations;
 using BakeryManagementPOSWebApp.Services.Customers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

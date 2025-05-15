@@ -93,12 +93,12 @@
 			</div>
 
 			<Accordion>
-				<AccordionItem Title="@(order.OrderedByID.ToString() + "-" + @order.OrderedBy!.FullName)">
+				<AccordionItem Title="@(order.CustomerID.ToString() + "-" + @order.OrderedBy!.FullName)">
 					<Content>
 						<div class="form-group row mb-2">
 							<label class="col-md-2 col-form-label">ID: </label>
 							<div class="col-md-10">
-								<input class="form-control-plaintext" readonly="" value="@order.OrderedByID" />
+								<input class="form-control-plaintext" readonly="" value="@order.CustomerID" />
 							</div>
 						</div>
 						<div class="form-group row mb-2">
@@ -147,7 +147,7 @@
 </Modal>
 
 <AuthorizeView Roles="Manager, Admin">
-	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Employee</Button>
+	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Order</Button>
 	<Button To="db/employee/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BakeryManagementPOSWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250514022642_Customer-Update")]
-    partial class CustomerUpdate
+    [Migration("20250515212617_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,6 +58,17 @@ namespace BakeryManagementPOSWebApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Customers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EmailAddress = "",
+                            FirstName = "",
+                            LastName = "",
+                            PhoneNumber = "000 000-0000"
+                        });
                 });
 
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Employee", b =>
@@ -146,6 +157,27 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "98646101-9f66-4aea-ad13-5250b5c1ddde",
+                            CustomerId = 1,
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EmailConfirmed = true,
+                            FirstName = "",
+                            LastName = "",
+                            LockoutEnabled = false,
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==",
+                            PhoneNumber = "000 000-0000",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "c6f3a8ff-a483-4466-b2c6-32313089d489",
+                            TwoFactorEnabled = false,
+                            UserName = "ADMIN"
+                        });
                 });
 
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Order", b =>
@@ -156,7 +188,7 @@ namespace BakeryManagementPOSWebApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CustomerId")
+                    b.Property<int>("CustomerID")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("DateCreated")
@@ -165,29 +197,29 @@ namespace BakeryManagementPOSWebApp.Migrations
                     b.Property<DateTime?>("DateDeleted")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DateProcessed")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("DateUpdated")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("EmployeeId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("EmployeeID")
+                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("OrderedBy")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("PickupDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ProcessedBy")
-                        .HasColumnType("int");
+                    b.Property<string>("ProcessedById")
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CustomerID");
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("ProcessedById");
 
                     b.ToTable("Orders");
                 });
@@ -287,6 +319,26 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1e348a66-f22c-48fa-9494-e422b79eea62",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "9636145a-2633-42e3-ada3-b517edced536",
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = "cd04e65e-405b-445c-8cb4-24b5f6824717",
+                            Name = "Employee",
+                            NormalizedName = "EMPLOYEE"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -374,6 +426,13 @@ namespace BakeryManagementPOSWebApp.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
+                            RoleId = "1e348a66-f22c-48fa-9494-e422b79eea62"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -408,17 +467,19 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Order", b =>
                 {
-                    b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Customer", "Customer")
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Customer", "OrderedBy")
                         .WithMany()
-                        .HasForeignKey("CustomerId");
+                        .HasForeignKey("CustomerID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Employee", "Employee")
+                    b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Employee", "ProcessedBy")
                         .WithMany()
-                        .HasForeignKey("EmployeeId");
+                        .HasForeignKey("ProcessedById");
 
-                    b.Navigation("Customer");
+                    b.Navigation("OrderedBy");
 
-                    b.Navigation("Employee");
+                    b.Navigation("ProcessedBy");
                 });
 
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.OrderItem", b =>

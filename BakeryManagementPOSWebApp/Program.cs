@@ -8,6 +8,7 @@ using BakeryManagementPOSWebApp.Data.Enities;
 using BakeryManagementPOSWebApp.Services.Products;
 using BakeryManagementPOSWebApp.Services.Customers;
 using BakeryManagementPOSWebApp.Services.Employees;
+using BakeryManagementPOSWebApp.Services.Orders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddBlazorBootstrap();
 
+builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<EmployeeService>();
