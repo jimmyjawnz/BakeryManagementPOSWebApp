@@ -91,7 +91,7 @@
 				</div>
 
 				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">First Name: </label>
+					<label class="col-md-2 col-form-label">First Name: <span class="text-danger">*</span></label>
 					<div class="col-md-10">
 						<TextInput @bind-Value="@employee.FirstName" Placeholder="Enter first name" />
 						<ValidationMessage For="() => employee.FirstName" />
@@ -99,10 +99,19 @@
 				</div>
 
 				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Last Name: </label>
+					<label class="col-md-2 col-form-label">Last Name: <span class="text-danger">*</span></label>
 					<div class="col-md-10">
 						<TextInput @bind-Value="@employee.LastName" Placeholder="Enter last name" />
 						<ValidationMessage For="() => employee.LastName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Password: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@Password" Placeholder="Enter user password" />
+						<small class="form-text text-muted">The employee will use this password to login.</small>
+						<ValidationMessage For="() => Password" />
 					</div>
 				</div>
 
@@ -182,6 +191,12 @@ else
 
 	private Button submitButton { get; set; } = default!;
 
+	[Required]
+	[StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+	[DataType(DataType.Password)]
+	[Display(Name = "Password")]
+	private string Password { get; set; } = string.Empty;
+
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadData();
@@ -213,15 +228,22 @@ else
 
 	private async Task SubmitForm()
 	{
+		int? result = null;
 		submitButton.ShowLoading("Loading...");
 
 		if (ModalTitle.Contains("Add"))
 		{
-			await Service.CreateEmployee(employee);
+			result = await Service.CreateEmployee(employee, Password);
 		}
 		else if (ModalTitle.Contains("Edit"))
 		{
 			await Service.UpdateEmployee(employee);
+		}
+
+		if (result is null)
+		{
+			submitButton.HideLoading();
+			return;
 		}
 
 		await LoadData();
@@ -232,6 +254,7 @@ else
 	private async Task ShowAddModal()
 	{
 		employee = new();
+		Password = string.Empty;
 		ModalTitle = "Add Employee";
 		editContext = new EditContext(employee);
 		await productModal.ShowAsync();

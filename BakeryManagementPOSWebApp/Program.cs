@@ -45,6 +45,7 @@ builder.Services.AddIdentityCore<Employee>(options =>
         options.Password.RequiredUniqueChars = 0;
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = false;
+        options.Password.RequireNonAlphanumeric = false;
         options.Lockout.MaxFailedAccessAttempts = 10;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
