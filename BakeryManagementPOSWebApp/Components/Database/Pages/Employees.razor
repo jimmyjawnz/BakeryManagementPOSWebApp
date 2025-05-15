@@ -1,5 +1,7 @@
 ﻿@page "/db/employees"
 
+@attribute [Authorize]
+
 <PageTitle>Employees</PageTitle>
 <title>Employees</title>
 <h2>Employees</h2>
@@ -23,12 +25,16 @@
 			@if (ModalTitle.Contains("Information"))
 		{
 			<h3>@employee.PhoneNumber</h3>
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">ID: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.Id" />
+
+			<AuthorizeView Roles="Manager, Admin">
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">ID: </label>
+					<div class="col-md-10">
+						<input class="form-control-plaintext" readonly="" value="@employee.Id" />
+					</div>
 				</div>
-			</div>
+			</AuthorizeView>
+
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Created: </label>
 				<div class="col-md-10">
@@ -134,8 +140,10 @@
 	</BodyTemplate>
 </Modal>
 
-<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Employee</Button>
-<Button To="db/employee/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
+<AuthorizeView Roles="Manager, Admin">
+	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Employee</Button>
+	<Button To="db/employee/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
+</AuthorizeView>
 
 @if (employees is null)
 {
@@ -166,8 +174,10 @@ else
 						<td>@item.PhoneNumber</td>
 						<td>@item.Email</td>
 						<td class="text-center">
-							<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-							<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+							<AuthorizeView Roles="Manager, Admin">
+								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
+								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+							</AuthorizeView>
 						</td>
 					</tr>
 				}

@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Identity
 @using BakeryManagementPOSWebApp.Data
 
+@inject EmployeeService EmployeeService
 @inject SignInManager<Employee> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
@@ -68,7 +69,8 @@
     {
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-        var result = await SignInManager.PasswordSignInAsync(Input.FullName, Input.Password, false, lockoutOnFailure: false);
+        var result = await SignInManager.PasswordSignInAsync(Input.FullName.Replace(" ", ""), Input.Password, false, lockoutOnFailure: false);
+
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
