@@ -7,7 +7,7 @@
 <h2>Orders</h2>
 
 @inject NavigationManager NavigationManager
-@inject OrdersService Service
+@inject OrderService Service
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
@@ -294,7 +294,7 @@ else
 
 	private async Task ShowInfoModal(Order item)
 	{
-		order = await Service.GetEmployee(item.Id);
+		order = await Service.GetOrder(item.Id);
 		ModalTitle = "Order Information";
 		editContext = new EditContext(order);
 		await orderModal.ShowAsync();
