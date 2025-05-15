@@ -1,4 +1,5 @@
 ﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
@@ -14,5 +15,20 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public string PhoneNumber { get; set; } = string.Empty;
         [EmailAddress]
         public string? EmailAddress { get; set; } = string.Empty;
+
+        public string FullName
+        {
+            get
+            {
+                if (!FirstName.IsNullOrEmpty() && !LastName.IsNullOrEmpty())
+                {
+                    return FirstName + " " + LastName;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+        }
     }
 }
