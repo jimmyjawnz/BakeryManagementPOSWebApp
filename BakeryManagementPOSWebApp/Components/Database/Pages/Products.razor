@@ -55,11 +55,11 @@
 				<div class="col-md-10">
 					@if (product.IsAvailable)
 					{
-						<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
+						<strong class="text-success form-control-plaintext"><i class="bi bi-check-lg"></i> Yes</strong>
 					}
 					else
 					{
-						<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
+						<strong class="text-danger form-control-plaintext"><i class="bi bi-x-lg"></i> No</strong>
 					}
 				</div>
 			</div>
@@ -73,14 +73,14 @@
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Price: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.Price" />
+					<input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", @product.Price)" />
 				</div>
 			</div>
 
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Description: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.Description" />
+					<textarea class="form-control-plaintext" rows="3" contenteditable="true" style="resize: none" draggable="false" readonly="" value="@product.Description" />
 				</div>
 			</div>
 			<div class="form-group row">
@@ -121,7 +121,7 @@
 				<div class="form-group row mb-2">
 					<label class="col-md-2 col-form-label">Product Description: </label>
 					<div class="col-md-10">
-						<TextInput @bind-Value="@product.Description" Placeholder="Enter product description" />
+						<TextAreaInput @bind-Value="@product.Description" Rows="3" style="resize: none" contenteditable="true" Placeholder="Enter product description" />
 						<ValidationMessage For="() => product.Description" />
 					</div>
 				</div>
