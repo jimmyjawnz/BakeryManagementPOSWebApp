@@ -5,7 +5,14 @@ IsVerticallyCentered="true"
 Size="ModalSize.Large">
 
 	<BodyTemplate>
-		<h2>Move <strong>@ObjectName</strong> to trash?</h2>
+		@if (Type.Equals("trash"))
+		{
+			<h2>Move <strong>@ObjectName</strong> to trash?</h2>
+		}
+		else
+		{
+			<h2>Delete <strong>@ObjectName</strong>?</h2>
+		}
 		<p>@Text</p>
 		<div class="form-group row">
 			<div class="col-md-12">
@@ -19,6 +26,9 @@ Size="ModalSize.Large">
 @code {
 	public Modal ModalRef { get; set; } = default!;
 	private Button submitButton { get; set; } = default!;
+
+	[Parameter]
+	public string Type { get; set; } = "trash";
 
 	[Parameter]
 	public string Title { get; set; } = "Are you sure?";
