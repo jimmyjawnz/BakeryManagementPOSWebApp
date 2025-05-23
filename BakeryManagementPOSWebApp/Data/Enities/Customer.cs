@@ -13,7 +13,6 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         [Phone(ErrorMessage = "Phone number is not a valid/supported number.")]
         [Required(ErrorMessage = "Phone number is required.")]
         public string PhoneNumber { get; set; } = string.Empty;
-        [EmailAddress]
         public string? EmailAddress { get; set; } = string.Empty;
 
         public string FullName
