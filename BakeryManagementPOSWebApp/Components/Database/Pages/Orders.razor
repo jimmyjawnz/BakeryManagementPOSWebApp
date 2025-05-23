@@ -148,7 +148,7 @@
 
 <AuthorizeView Roles="Manager, Admin">
 	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Order</Button>
-	<Button To="db/employee/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
+	<Button To="db/orders/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
 @if (orders is null)
