@@ -9,15 +9,27 @@ Size="ModalSize.Large">
 		{
 			<h2>Move <strong>@ObjectName</strong> to trash?</h2>
 		}
-		else
+		else if (Type.Equals("delete"))
 		{
 			<h2>Delete <strong>@ObjectName</strong>?</h2>
+		}
+		else
+		{
+			<h2>Restore <strong>@ObjectName</strong>?</h2>
 		}
 		<p>@Text</p>
 		<div class="form-group row">
 			<div class="col-md-12">
 				<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">@CancelText</Button>
-				<Button @ref="submitButton" @onclick="@Submit" Color="ButtonColor.Danger" Class="float-end me-2">@SubmitText</Button>
+				@if (Type.Equals("restore"))
+				{
+					<Button @ref="submitButton" @onclick="@Submit" Color="ButtonColor.Success" Class="float-end me-2">@SubmitText</Button>
+
+				}
+				else
+				{
+					<Button @ref="submitButton" @onclick="@Submit" Color="ButtonColor.Danger" Class="float-end me-2">@SubmitText</Button>
+				}
 			</div>
 		</div>
 	</BodyTemplate>
@@ -49,7 +61,13 @@ Size="ModalSize.Large">
 
 	private async Task Submit()
 	{
-		submitButton.ShowLoading("Moving to trash...");
+		if (Type.Equals("trash"))
+			submitButton.ShowLoading("Moving to trash...");
+		else if (Type.Equals("delete"))
+			submitButton.ShowLoading("Deleting...");
+		else
+			submitButton.ShowLoading("Restoring...");
+
 		await SubmitMethod.InvokeAsync();
 		await Task.Delay(100);
 		await Hide();
