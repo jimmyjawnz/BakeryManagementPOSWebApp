@@ -33,7 +33,10 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
-    .AddIdentityCookies(options => options.ApplicationCookie!.Configure(options => options.LoginPath = "/login"));
+    .AddIdentityCookies(options => options.ApplicationCookie!.Configure(options => {
+        options.LoginPath = "/login";
+        options.AccessDeniedPath = "/access-denied";
+        }));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
