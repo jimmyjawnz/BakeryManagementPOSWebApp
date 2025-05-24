@@ -8,17 +8,18 @@
 
 @inject NavigationManager NavigationManager
 @inject EmployeeService Service
+@inject UserManager<Employee> UserManager
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
 <TrashModal @ref="deleteModal"
-	ObjectName="@employee.PhoneNumber"
+			ObjectName="@(employee.FullName + " (" + Role + ")")"
 			SubmitMethod="SubmitRemoval"
 			Text="This item will be deleted permanently!"
 			Type="delete"/>
 
 <TrashModal @ref="restoreModal"
-	ObjectName="@employee.PhoneNumber"
+			ObjectName="@(employee.FullName + " (" + Role + ")")"
 			SubmitMethod="SubmitRestore"
 			Text="This item will be restored and moved out of trash."
 			Type="restore"/>
@@ -28,13 +29,13 @@
 	   Size="ModalSize.ExtraLarge">
 	<BodyTemplate>
 
-		<h3>@employee.PhoneNumber</h3>
+		<h3>@employee.FullName (@Role)</h3>
 
 		<AuthorizeView Roles="Manager, Admin">
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">ID: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.Id.ToString()" />
+					<input class="form-control-plaintext" readonly="" value="@employee.Id" />
 				</div>
 			</div>
 		</AuthorizeView>
@@ -45,12 +46,7 @@
 				<input class="form-control-plaintext" readonly="" value="@employee.DateCreatedStr" />
 			</div>
 		</div>
-		<div class="form-group row mb-2">
-			<label class="col-md-2 col-form-label">Date Trashed: </label>
-			<div class="col-md-10">
-				<input class="form-control-plaintext" readonly="" value="@employee.DateDeletedStr" />
-			</div>
-		</div>
+
 		<div class="form-group row mb-2">
 			<label class="col-md-2 col-form-label">Last Updated: </label>
 			<div class="col-md-10">
@@ -87,6 +83,14 @@
 				<input class="form-control-plaintext" readonly="" value="@employee.Email" />
 			</div>
 		</div>
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Employee Role: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@Role" />
+			</div>
+		</div>
+
 		<div class="form-group row">
 			<div class="col-md-12">
 				<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
@@ -130,7 +134,7 @@ else
 						<td>@item.PhoneNumber</td>
 						<td>@item.Email</td>
 						<td class="text-center">
-							<AuthorizeView Roles="Manager, Admin">
+							<AuthorizeView Roles="Admin">
 								<Button @onclick="() => ShowRestoreModal(item)" Color="ButtonColor.Success"><i class="bi bi-arrow-counterclockwise"></i></Button>
 								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-file-earmark-x"></i></Button>
 							</AuthorizeView>
@@ -158,6 +162,8 @@ else
 
 	private Button submitButton { get; set; } = default!;
 
+	private string Role { get; set; } = "Employee";
+
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadData();
@@ -175,28 +181,32 @@ else
 		NavigationManager.Refresh(true);
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Admin")]
 	private async Task ShowRemoveModal(Employee item)
 	{
 		employee = item;
+		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
+		Role = role[0];
 		await deleteModal.Show();
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Admin")]
 	private async Task SubmitRemoval()
 	{
 		await Service.HardDeleteEmployee(employee);
 		await LoadData();
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Admin")]
 	private async Task ShowRestoreModal(Employee item)
 	{
 		employee = item;
+		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
+		Role = role[0];
 		await restoreModal.Show();
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Admin")]
 	private async Task SubmitRestore()
 	{
 		await Service.RecoverEmployee(employee);
@@ -206,6 +216,8 @@ else
 	private async Task ShowInfoModal(Employee item)
 	{
 		employee = await Service.GetEmployee(item.Id);
+		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
+		Role = role[0];
 		ModalTitle = "Employee Information";
 		editContext = new EditContext(employee);
 		await employeeModal.ShowAsync();

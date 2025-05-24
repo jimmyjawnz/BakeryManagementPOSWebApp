@@ -13,7 +13,7 @@
 @attribute [StreamRendering]
 
 <TrashModal @ref="trashModal"
-	ObjectName="@employee.PhoneNumber"
+	ObjectName="@(employee.FullName + " (" + Role + ")")"
 			SubmitMethod="SubmitRemoval" />
 
 <Modal @ref="employeeModal" Title="@ModalTitle"
@@ -25,7 +25,7 @@
 
 		@if (ModalTitle.Contains("Information"))
 		{
-			<h3>@employee.PhoneNumber</h3>
+			<h3>@employee.FullName (@Role)</h3>
 
 			<AuthorizeView Roles="Manager, Admin">
 				<div class="form-group row mb-2">
@@ -78,6 +78,14 @@
 					<input class="form-control-plaintext" readonly="" value="@employee.Email" />
 				</div>
 			</div>
+
+			<div class="form-group row mb-2">
+				<label class="col-md-2 col-form-label">Employee Role: </label>
+				<div class="col-md-10">
+					<input class="form-control-plaintext" readonly="" value="@Role" />
+				</div>
+			</div>
+
 			<div class="form-group row">
 				<div class="col-md-12">
 					<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
@@ -309,6 +317,8 @@ else
 	private async Task ShowInfoModal(Employee item)
 	{
 		employee = await Service.GetEmployee(item.Id);
+		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
+		Role = role[0];
 		ModalTitle = "Employee Information";
 		await employeeModal.ShowAsync();
 	}
