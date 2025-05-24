@@ -173,7 +173,7 @@ else
 	public async Task LoadData()
 	{
 		products = null;
-		await Task.Delay(1000);
+		await Task.Delay(10);
 		products = await Service.GetTrashedProducts();
 	}
 
@@ -182,24 +182,28 @@ else
 		NavigationManager.Refresh(true);
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Product item)
 	{
 		product = item;
 		await deleteModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
 		await Service.HardDeleteProduct(product);
 		await LoadData();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRestoreModal(Product item)
 	{
 		product = item;
 		await restoreModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRestore()
 	{
 		await Service.RecoverProduct(product);

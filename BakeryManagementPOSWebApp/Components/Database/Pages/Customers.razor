@@ -36,7 +36,7 @@
 			</AuthorizeView>
 
 			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Created: </label>
+				<label class="col-md-2 col-form-label">Date Created: </label>
 				<div class="col-md-10">
 					<input class="form-control-plaintext" readonly="" value="@customer.DateCreatedStr" />
 				</div>
@@ -204,7 +204,7 @@ else
 	public async Task LoadData()
 	{
 		customers = null;
-		await Task.Delay(1000);
+		await Task.Delay(10);
 		customers = await Service.GetExistingCustomers();
 	}
 
@@ -213,18 +213,21 @@ else
 		NavigationManager.Refresh(true);
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Customer item)
 	{
 		customer = item;
 		await trashModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
 		await Service.SoftDeleteCustomer(customer);
 		await LoadData();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitForm()
 	{
 		submitButton.ShowLoading("Loading...");
@@ -243,6 +246,7 @@ else
 		submitButton.HideLoading();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowAddModal()
 	{
 		customer = new();
@@ -251,6 +255,7 @@ else
 		await customerModal.ShowAsync();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowEditModal(Customer item)
 	{
 		customer = item;

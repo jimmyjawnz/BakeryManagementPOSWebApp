@@ -166,7 +166,7 @@ else
 	public async Task LoadData()
 	{
 		customers = null;
-		await Task.Delay(1000);
+		await Task.Delay(10);
 		customers = await Service.GetTrashedCustomers();
 	}
 
@@ -175,24 +175,28 @@ else
 		NavigationManager.Refresh(true);
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Customer item)
 	{
 		customer = item;
 		await deleteModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
 		await Service.HardDeleteCustomer(customer);
 		await LoadData();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRestoreModal(Customer item)
 	{
 		customer = item;
 		await restoreModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRestore()
 	{
 		await Service.RecoverCustomer(customer);

@@ -50,7 +50,7 @@
 					</div>
 
 					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Created: </label>
+						<label class="col-md-2 col-form-label">Date Created: </label>
 						<div class="col-md-4">
 							<input class="form-control-plaintext" readonly="" value="@order.DateCreatedStr" />
 						</div>
@@ -234,7 +234,7 @@ else
 	public async Task LoadData()
 	{
 		orders = null;
-		await Task.Delay(1000);
+		await Task.Delay(10);
 		orders = await Service.GetExistingOrders();
 	}
 
@@ -243,18 +243,21 @@ else
 		NavigationManager.Refresh(true);
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Order item)
 	{
 		order = item;
 		await trashModal.Show();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
 		await Service.SoftDeleteOrder(order);
 		await LoadData();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitForm()
 	{
 		int? result = null;
@@ -280,6 +283,7 @@ else
 		submitButton.HideLoading();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowAddModal()
 	{
 		order = new();
@@ -288,6 +292,7 @@ else
 		await orderModal.ShowAsync();
 	}
 
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowEditModal(Order item)
 	{
 		order = item;
