@@ -78,9 +78,14 @@ namespace BakeryManagementPOSWebApp.Services.Employees
             return await _dbContext.Employees.Where(p => p.Id == id).FirstAsync();
         }
 
-        public async Task<int> UpdateEmployee(Employee employee)
+        public async Task<int> UpdateEmployee(Employee employee, string role)
         {
             employee.DateUpdated = DateTime.Now;
+
+            await _userManager.RemoveFromRoleAsync(employee, "Employee");
+            await _userManager.RemoveFromRoleAsync(employee, "Manager");
+            await _userManager.RemoveFromRoleAsync(employee, "Admin");
+            await _userManager.AddToRoleAsync(employee, role);
 
             _dbContext.Employees.Update(employee);
             return await _dbContext.SaveChangesAsync();
