@@ -67,6 +67,14 @@
 
     public async Task LoginUser()
     {
+        var employee = await EmployeeService.GetEmployeeByUserName(Input.FullName.Replace(" ", ""));
+
+        if(employee.DateDeleted is not null)
+        {
+            errorMessage = "Error: Invalid login attempt.";
+            return;
+        }
+
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
         var result = await SignInManager.PasswordSignInAsync(Input.FullName.Replace(" ", ""), Input.Password, false, lockoutOnFailure: false);

@@ -77,6 +77,10 @@ namespace BakeryManagementPOSWebApp.Services.Employees
         {
             return await _dbContext.Employees.Where(p => p.Id == id).FirstAsync();
         }
+        public async Task<Employee> GetEmployeeByUserName(string userName)
+        {
+            return await _dbContext.Employees.Where(p => p.UserName == userName).FirstAsync();
+        }
 
         public async Task<int> UpdateEmployee(Employee employee, string role)
         {
