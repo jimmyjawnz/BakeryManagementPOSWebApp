@@ -35,7 +35,7 @@ namespace BakeryManagementPOSWebApp.Services.Employees
             return await _dbContext.Employees.Where(p => p.DateDeleted != null).ToListAsync();
         }
 
-        public async Task<int?> CreateEmployee(Employee employee, string password)
+        public async Task<int?> CreateEmployee(Employee employee, string password, string role = "Employee")
         {
             // Get customer with the same PhoneNumber
             Customer? linkedCustomer = await _customerService.GetCustomer(employee.PhoneNumber!);
@@ -60,6 +60,9 @@ namespace BakeryManagementPOSWebApp.Services.Employees
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(employee);
             await _userManager.ConfirmEmailAsync(employee, code);
             var result = await _userManager.CreateAsync(employee, password).ConfigureAwait(false);
+
+            // Add role to user
+            await _userManager.AddToRoleAsync(employee, role);
 
             if (!result.Succeeded)
             {
