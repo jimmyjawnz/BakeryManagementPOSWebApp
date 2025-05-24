@@ -1,0 +1,214 @@
+﻿@page "/db/employees/trash"
+
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+<PageTitle>Employee Trash</PageTitle>
+<title>Employee Trash</title>
+<h2>Employee Trash</h2>
+
+@inject NavigationManager NavigationManager
+@inject EmployeeService Service
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<TrashModal @ref="deleteModal"
+	ObjectName="@employee.PhoneNumber"
+			SubmitMethod="SubmitRemoval"
+			Text="This item will be deleted permanently!"
+			Type="delete"/>
+
+<TrashModal @ref="restoreModal"
+	ObjectName="@employee.PhoneNumber"
+			SubmitMethod="SubmitRestore"
+			Text="This item will be restored and moved out of trash."
+			Type="restore"/>
+
+<Modal @ref="employeeModal" Title="@ModalTitle"
+	   IsVerticallyCentered="true"
+	   Size="ModalSize.ExtraLarge">
+	<BodyTemplate>
+
+		<h3>@employee.PhoneNumber</h3>
+
+		<AuthorizeView Roles="Manager, Admin">
+			<div class="form-group row mb-2">
+				<label class="col-md-2 col-form-label">ID: </label>
+				<div class="col-md-10">
+					<input class="form-control-plaintext" readonly="" value="@employee.Id.ToString()" />
+				</div>
+			</div>
+		</AuthorizeView>
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Date Created: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.DateCreatedStr" />
+			</div>
+		</div>
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Date Trashed: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.DateDeletedStr" />
+			</div>
+		</div>
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Last Updated: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.DateUpdatedStr" />
+			</div>
+		</div>
+
+		<hr />
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Phone number: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.PhoneNumber" />
+			</div>
+		</div>
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">First Name: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.FirstName" />
+			</div>
+		</div>
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Last Name: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.LastName" />
+			</div>
+		</div>
+
+		<div class="form-group row mb-2">
+			<label class="col-md-2 col-form-label">Email: </label>
+			<div class="col-md-10">
+				<input class="form-control-plaintext" readonly="" value="@employee.Email" />
+			</div>
+		</div>
+		<div class="form-group row">
+			<div class="col-md-12">
+				<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
+			</div>
+		</div>
+	</BodyTemplate>
+</Modal>
+
+<Button To="db/employees" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Employees</Button>
+
+@if (employees is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th width="20%">Name</th>
+				<th width="30%">Phone Number</th>
+				<th width="30%">Email</th>
+				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			@if (employees.Count == 0)
+			{
+				<tr>
+					<td colspan="4" class="text-center">
+						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No trashed employees found in database." />
+					</td>
+				</tr>
+			}
+			@foreach (var item in employees)
+			{
+				@if (item.DateDeleted is not null)
+				{
+					<tr @ondblclick="(() => ShowInfoModal(item))">
+						<td>@item.FullName</td>
+						<td>@item.PhoneNumber</td>
+						<td>@item.Email</td>
+						<td class="text-center">
+							<AuthorizeView Roles="Manager, Admin">
+								<Button @onclick="() => ShowRestoreModal(item)" Color="ButtonColor.Success"><i class="bi bi-arrow-counterclockwise"></i></Button>
+								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-file-earmark-x"></i></Button>
+							</AuthorizeView>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+}
+
+
+@code {
+	private TrashModal deleteModal { get; set; } = default!;
+	private TrashModal restoreModal { get; set; } = default!;
+
+	private Modal employeeModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
+
+	private EditContext editContext { get; set; } = default!;
+	private Employee employee { get; set; } = new();
+
+	private List<Employee>? employees { get; set; } = new();
+	private Button RefreshButton { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadData();
+	}
+
+	public async Task LoadData()
+	{
+		employees = null;
+		await Task.Delay(1000);
+		employees = await Service.GetTrashedEmployees();
+	}
+
+	private void RefreshData()
+	{
+		NavigationManager.Refresh(true);
+	}
+
+	private async Task ShowRemoveModal(Employee item)
+	{
+		employee = item;
+		await deleteModal.Show();
+	}
+
+	private async Task SubmitRemoval()
+	{
+		await Service.HardDeleteEmployee(employee);
+		await LoadData();
+	}
+
+	private async Task ShowRestoreModal(Employee item)
+	{
+		employee = item;
+		await restoreModal.Show();
+	}
+
+	private async Task SubmitRestore()
+	{
+		await Service.RecoverEmployee(employee);
+		await LoadData();
+	}
+
+	private async Task ShowInfoModal(Employee item)
+	{
+		employee = await Service.GetEmployee(item.Id);
+		ModalTitle = "Employee Information";
+		editContext = new EditContext(employee);
+		await employeeModal.ShowAsync();
+	}
+
+	private async Task HideModal()
+	{
+		await employeeModal.HideAsync();
+	}
+}
