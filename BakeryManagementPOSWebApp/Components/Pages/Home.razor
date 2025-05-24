@@ -2,4 +2,48 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Home</h1>
+<AuthorizeView>
+	<Authorized>
+		<h1>Welcome, @context.User.Identity?.Name. </h1>
+
+        <div class="bg-dark-subtle p-3 rounded-5 mt-5">
+            <div style="display: flex;" class="flex-row flex-wrap justify-content-around mt-5">
+                <div class="text-center flex-column mb-3" style="display: flex; min-width: 20rem; min-height: 10rem;">
+                    <Button To="/dashboard" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
+                        <i class="bi bi-table"></i>
+                        <br />
+                        Dashboard
+                    </Button>
+                </div>                
+                <div class="text-center flex-column mb-3" style="display: flex; min-width: 20rem; min-height: 10rem;">
+                    <Button To="/db" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
+                        <i class="bi bi-database-fill"></i>
+                        <br />
+                        Database
+                    </Button>
+                </div>
+                <div class="text-center flex-column mb-3" style="display: flex; min-width: 20rem; min-height: 10rem;">
+                    <Button To="/dashboard/labels" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
+                        <i class="bi bi-printer-fill"></i>
+                        <br />
+                        Labels
+                    </Button>
+                </div>
+                <div class="text-center flex-column mb-3" style="display: flex; min-width: 20rem; min-height: 10rem;">
+                    <Button To="/till" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
+                        <i class="bi bi-shop"></i>
+                        <br />
+                        Front Till
+                    </Button>
+                </div>
+            </div>
+        </div>
+	</Authorized>
+	<NotAuthorized>
+		<h1>Welcome.</h1>
+		<h3>You are currently not logged in.</h3>
+		<Button Color="ButtonColor.Primary" Size="ButtonSize.Large" Type="ButtonType.Link" To="login">
+			Login
+		</Button>
+	</NotAuthorized>
+</AuthorizeView>

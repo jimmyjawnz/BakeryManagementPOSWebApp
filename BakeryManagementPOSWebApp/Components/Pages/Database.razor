@@ -14,9 +14,11 @@
                 <Button To="@endpoint.Href" Color="ButtonColor.Primary" Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 8rem; align-content: center;">
                     @endpoint.Text
                 </Button>
-                <Button To="@(endpoint.Href+"/trash")" Color="ButtonColor.Dark" Outline=true Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 2rem; align-content: center; margin-top: 0.5rem;">
-                    @endpoint.Text Trash
-                </Button>
+                <AuthorizeView Roles="Manager,Admin">
+                    <Button To="@(endpoint.Href + "/trash")" Color="ButtonColor.Dark" Outline=true Type="ButtonType.Link" Size="ButtonSize.ExtraLarge" style="min-height: 2rem; align-content: center; margin-top: 0.5rem;">
+                        @endpoint.Text Trash
+                    </Button>
+                </AuthorizeView>
             </div>
         }
     </div>
