@@ -157,10 +157,6 @@
 }
 else 
 {
-	@if (orders.Count == 0)
-	{
-		<UserMessage Color="AlertColor.Danger" Type="MessageType.Error" ErrorNumber="100" Message="No existing orders found in database." />
-	}
 	<table class="table table-striped table-hover">
 		<thead>
 			<tr>
@@ -172,6 +168,14 @@ else
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
+			@if (orders.Count == 0)
+			{
+				<tr>
+					<td colspan="5" class="text-center">
+						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing orders found in database." />
+					</td>
+				</tr>
+			}
 			@foreach (var item in orders)
 			{
 				@if (item.DateDeleted is null)
