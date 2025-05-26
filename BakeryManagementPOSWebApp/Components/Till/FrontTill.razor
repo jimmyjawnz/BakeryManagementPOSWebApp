@@ -1,0 +1,136 @@
+﻿@layout EmptyLayout
+@page "/till"
+
+
+@attribute [Authorize]
+
+<PageTitle>Front Till</PageTitle>
+<title>Front Till</title>
+
+@inject ProductService ProductService
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<div class="container-fluid" style="min-height: 100vh" id="content">
+    @* Nav Bar *@
+    <div class="row">
+        <NavMenu Height="5vh" />
+    </div>
+    <div class="row" style="min-height: 95vh">
+        @* Products/Orders View *@
+        <div class="col-md-6 p-1">
+            <div class="h-100 bg-light">
+                <Tabs NavStyle="NavStyle.Pills">
+                    <Tab Active="true">
+                        <TitleTemplate>
+                        <i class="bi bi-box-seam"></i> Products
+                        </TitleTemplate>
+                        <Content>
+                            <div class="p-1">
+                                @if (products is null)
+                                {
+                                    <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+                                }
+                                else if (products.Count <= 0)
+                                {
+                                    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available products found." />
+                                }
+                                else
+                                {
+                                    <div class="row row-cols-auto align-items-start overflow-auto" style="max-height: 85vh">
+                                        @foreach (var item in products)
+                                        {
+                                            <div>
+                                                <Card Color="CardColor.Dark" Class="mb-4">
+                                                    <img class="rounded" src="/images/placeholder.jpg" alt="placeholder" width="208" height="208" style="object-fit: cover;" />
+                                                    <CardBody Class="position-absolute bg-light bg-opacity-75 w-100 rounded-bottom" Style="bottom: 0;">
+                                                            <CardTitle Class="text-black">
+                                                                @if (item.Name.Length > 33)
+                                                                {
+                                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.Name">
+                                                                        @item.Name.Substring(0, Math.Min(30, item.Name.Length))...
+                                                                    </Tooltip>
+                                                                }
+                                                                else
+                                                                {
+                                                                    @item.Name
+                                                                }
+                                                            </CardTitle>
+                                                        <CardSubTitle Class="mb-2 text-black">
+                                                            @String.Format("{0:C2}", item.Price)
+                                                        </CardSubTitle>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text" id="inputGroupPrepend">Qty</span>
+                                                            </div>
+                                                            <input class="form-control" type="number" placeholder="Qty" value="1"  />
+                                                            <button class="btn btn-primary" @onclick="LoadData">Add</button>
+                                                        </div>
+                                                    </CardBody>
+                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block float-end position-absolute" Style="top: 0; right: 4px; font-size: 1.25em;" Title="<h6><b>Ingredients</b></h6> N/A <h6><b>May Contain</b></h6> N/A" IsHtml=true>
+                                                        <Badge Color="BadgeColor.Info" IndicatorType="BadgeIndicatorType.RoundedPill"><Icon Name="IconName.InfoCircleFill"></Icon></Badge>
+                                                    </Tooltip>
+                                                </Card>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </Content>
+                    </Tab>
+                    <Tab>
+                        <TitleTemplate>
+                        <i class="bi bi-boxes"></i> Orders
+                        </TitleTemplate>
+                        <Content>
+                            <p class="mt-3">This is the placeholder content for the <b>Orders</b> tab.</p>
+                        </Content>
+                    </Tab>
+                </Tabs>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row h-100">
+                @* Cart *@
+                <div class="col-md-6 bg-info">
+                    <span><i class="fa-solid fa-cart-shopping me-1"></i> Cart</span>
+                </div>
+                <div class="col-md-6">
+                    @* Payment Proccessing *@
+                    <div class="row h-50">
+                        <div class="col bg-warning">
+                            <span><i class="fa-solid fa-credit-card me-1"></i> Employee and Payment</span>
+                        </div>
+                    </div>
+                    @* Calculator *@
+                    <div class="row h-50">
+                        <div class="col bg-secondary">
+                            <span><i class="fa-solid fa-calculator me-1"></i> Calculator</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<Product>? products { get; set; } = new();
+
+    private int amount { get; set; } = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    public async Task LoadData()
+    {
+        products = null;
+        await Task.Delay(10);
+        products = await ProductService.GetAvailableProducts();
+    }
+}
