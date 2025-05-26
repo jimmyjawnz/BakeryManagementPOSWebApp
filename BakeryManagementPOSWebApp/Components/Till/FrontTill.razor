@@ -9,8 +9,12 @@
 
 @inject ProductService ProductService
 
+@inject NavigationManager Navigation
+
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
+
+<ConfirmDialog @ref="ConfirmModal" />
 
 <div class="container-fluid" style="min-height: 100vh" id="content">
     @* Nav Bar *@
@@ -22,6 +26,7 @@
         <div class="col-md-6 p-1">
             <div class="h-100 bg-light">
                 <Tabs NavStyle="NavStyle.Pills">
+                    @* Products Tab *@
                     <Tab Active="true">
                         <TitleTemplate>
                         <i class="bi bi-box-seam"></i> Products
@@ -60,13 +65,15 @@
                                                         <CardSubTitle Class="mb-2 text-black">
                                                             @String.Format("{0:C2}", item.Price)
                                                         </CardSubTitle>
-                                                        <div class="input-group">
-                                                            <div class="input-group-prepend">
-                                                                <span class="input-group-text" id="inputGroupPrepend">Qty</span>
+                                                        <form @onsubmit="() => AddToCart(item)">
+                                                            <div class="input-group">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text" id="inputGroupPrepend">Qty</span>
+                                                                </div>
+                                                                <InputNumber @bind-Value="@Amount" TValue="int" class="form-control" placeholder="Qty" />
+                                                                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add</Button>
                                                             </div>
-                                                            <input class="form-control" type="number" placeholder="Qty" value="1"  />
-                                                            <button class="btn btn-primary" @onclick="LoadData">Add</button>
-                                                        </div>
+                                                        </form>
                                                     </CardBody>
                                                     <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block float-end position-absolute" Style="top: 0; right: 4px; font-size: 1.25em;" Title="<h6><b>Ingredients</b></h6> N/A <h6><b>May Contain</b></h6> N/A" IsHtml=true>
                                                         <Badge Color="BadgeColor.Info" IndicatorType="BadgeIndicatorType.RoundedPill"><Icon Name="IconName.InfoCircleFill"></Icon></Badge>
@@ -79,6 +86,7 @@
                             </div>
                         </Content>
                     </Tab>
+                    @* Orders Tab *@
                     <Tab>
                         <TitleTemplate>
                         <i class="bi bi-boxes"></i> Orders
@@ -91,16 +99,55 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="row h-100">
+            <div class="row h-100 p-1">
                 @* Cart *@
-                <div class="col-md-6 bg-info">
-                    <span><i class="fa-solid fa-cart-shopping me-1"></i> Cart</span>
+                <div class="col-md-6 bg-light p-0" >
+                    <div style="height:94vh; overflow-y:scroll">
+                        <table class="table table-striped table-hover table-primary">
+                            <thead class="position-sticky top-0" >
+                                <tr>
+                                    <th width="5%" class="text-center">Qty</th>
+                                    <th width="" >Product</th>
+                                    <th width="20%" class="text-end">Price</th>
+                                    <th width="10%" class="text-center">
+                                        <Button @ref="ClearButton" @onclick="ClearCart" Color="ButtonColor.Danger" Outline="true">Clear</Button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider table-light">
+                                @foreach (var item in CurrentOrder.OrderItems!)
+                                {
+                                    <tr>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td>
+                                            @if (item.ProductName.Length > 68)
+                                            {
+                                                <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
+                                                    @item.ProductName.Substring(0, Math.Min(65, item.ProductName.Length))...
+                                                </Tooltip>
+                                            }
+                                            else
+                                            {
+                                                @item.ProductName
+                                            }
+                                        </td>
+                                        <td class="text-end">@String.Format("{0:C2}", item.Product!.Price)</td>
+                                        <td class="text-end">
+                                            <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     @* Payment Proccessing *@
                     <div class="row h-50">
                         <div class="col bg-warning">
                             <span><i class="fa-solid fa-credit-card me-1"></i> Employee and Payment</span>
+                            <EditForm FormName="OrderForm" EditContext="editContext" OnValidSubmit="SubmitOrder">
+                            </EditForm>
                         </div>
                     </div>
                     @* Calculator *@
@@ -110,7 +157,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -120,10 +166,19 @@
 
     private List<Product>? products { get; set; } = new();
 
-    private int amount { get; set; } = 1;
+    private int Amount { get; set; } = 1;
+
+    private EditContext editContext { get; set; } = default!;
+
+    private Button ClearButton { get; set; } = default!;
+    private ConfirmDialog ConfirmModal = default!;
+
+    private Order CurrentOrder { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
+        CurrentOrder = new();
+        editContext = new(CurrentOrder);
         await LoadData();
     }
 
@@ -132,5 +187,56 @@
         products = null;
         await Task.Delay(10);
         products = await ProductService.GetAvailableProducts();
+    }
+
+    public async Task ClearCart()
+    {
+        var confirmation = await ConfirmModal.ShowAsync(
+            title: "Are you sure you want to clear the cart?",
+            message1: "This will remove all products/orders in the cart.",
+            message2: "Do you want to proceed?"
+        );
+
+        if (confirmation)
+        {
+            CurrentOrder.OrderItems!.Clear();
+        }
+    }
+
+    public async Task AddToCart(Product product)
+    {
+        if (product is not null)
+        {
+            CurrentOrder.OrderItems!.Add(new OrderItem()
+            {
+                Product = product,
+                ProductId = product.Id,
+                Quantity = Amount
+            });
+
+            Amount = 1;
+        }
+        else
+        {
+            await LoadData();
+        }
+    }
+
+    public async Task RemoveFromCart(OrderItem orderItem)
+    {
+        if (orderItem is not null)
+        {
+            CurrentOrder.OrderItems!.Remove(orderItem);
+        }
+        else
+        {
+            await LoadData();
+        }
+
+    }
+
+    public async Task SubmitOrder()
+    {
+        
     }
 }
