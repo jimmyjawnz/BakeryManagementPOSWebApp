@@ -70,7 +70,7 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text" id="inputGroupPrepend">Qty</span>
                                                                 </div>
-                                                                <InputNumber @bind-Value="@Amount" TValue="int" class="form-control" placeholder="Qty" />
+                                                                <InputNumber @bind-Value="@Amount" TValue="int" class="form-control" placeholder="Qty"  />
                                                                 <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add</Button>
                                                             </div>
                                                         </form>
@@ -103,27 +103,31 @@
                 @* Cart *@
                 <div class="col-md-6 bg-light p-0" >
                     <div style="height:94vh; overflow-y:scroll">
-                        <table class="table table-striped table-hover table-primary">
-                            <thead class="position-sticky top-0" >
+                        <table class="table table-striped table-hover">
+                            <thead class="position-sticky top-0 table-primary" >
                                 <tr>
-                                    <th width="5%" class="text-center">Qty</th>
-                                    <th width="" >Product</th>
+                                    <th width="15%" class="text-center">Qty</th>
+                                    <th>Product</th>
                                     <th width="20%" class="text-end">Price</th>
                                     <th width="10%" class="text-center">
                                         <Button @ref="ClearButton" @onclick="ClearCart" Color="ButtonColor.Danger" Outline="true">Clear</Button>
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="table-group-divider table-light">
+                            <tbody class="table-group-divider">
                                 @foreach (var item in CurrentOrder.OrderItems!)
                                 {
                                     <tr>
-                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-center">
+                                            <Button @onclick="() => ChangeQty(item, 1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">+</Button>
+                                            @item.Quantity
+                                            <Button @onclick="() => ChangeQty(item, -1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">-</Button>
+                                        </td>
                                         <td>
-                                            @if (item.ProductName.Length > 68)
+                                            @if (item.ProductName.Length > 53)
                                             {
                                                 <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
-                                                    @item.ProductName.Substring(0, Math.Min(65, item.ProductName.Length))...
+                                                    @item.ProductName.Substring(0, Math.Min(50, item.ProductName.Length))...
                                                 </Tooltip>
                                             }
                                             else
@@ -191,6 +195,10 @@
 
     public async Task ClearCart()
     {
+        if (CurrentOrder.OrderItems!.Count <= 0)
+        {
+            return;
+        }
         var confirmation = await ConfirmModal.ShowAsync(
             title: "Are you sure you want to clear the cart?",
             message1: "This will remove all products/orders in the cart.",
@@ -233,6 +241,23 @@
             await LoadData();
         }
 
+    }
+
+    public void ChangeQty(OrderItem orderItem, int amount)
+    {
+        if (orderItem is not null)
+        {
+            if (orderItem.Quantity <= 1 && amount < 0)
+            {
+                CurrentOrder.OrderItems!.Remove(orderItem);
+            }
+            else if (orderItem.Quantity <= 99)
+            {
+                if (orderItem.Quantity == 99 && amount > 0)
+                    return;
+                CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated)!.Quantity += amount;
+            }
+        }
     }
 
     public async Task SubmitOrder()
