@@ -9,6 +9,7 @@
 @inject ProductService ProductService
 @inject CustomerService CustomerService
 @inject EmployeeService EmployeeService
+@inject OrderService OrderService
 @inject NavigationManager Navigation
 
 @rendermode @(new InteractiveServerRenderMode(false))
@@ -115,6 +116,14 @@
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
+                                @if (CurrentOrder.OrderItems is null || CurrentOrder.OrderItems.Count <= 0)
+                                {
+                                    <tr>
+					                    <td colspan="4" class="text-center bg-light">
+                                            <UserMessage Color="AlertColor.Secondary" Type="MessageType.Info" Message="Cart is empty." />
+                                        </td>
+                                    </tr>
+                                }
                                 @foreach (var item in CurrentOrder.OrderItems!)
                                 {
                                     <tr>
@@ -151,13 +160,17 @@
                 </div>
                 <div class="col-md-6">
                     @* Payment Proccessing *@
-                    <div class="row h-50">
+                    <div class="row" style="height: 58vh">
                         <div class="col p-0">
-                            <Card Class="border-primary border-5">
+                            <Card Class="border-primary border-5 h-100">
                                 <h4 class="card-header mt-2">Order Proccessing</h4>
                                 <CardBody>
                                     <EditForm FormName="OrderForm" EditContext="editContext" OnValidSubmit="SubmitOrder">
-                                        <div class="form-group row mb-2">
+                                        <DataAnnotationsValidator />
+                                        <ValidationMessage For="() => CurrentOrder.EmployeeID" />
+                                        <ValidationMessage For="() => CurrentOrder.OrderItems" />
+
+                                        <div class="form-group row mt-2 mb-2">
                                             <div class="col-md-5 col-md-12">
                                                 <label>Customer</label>
                                                 <AutoComplete @bind-Value="@customerPhone"
@@ -166,6 +179,7 @@
                                                               PropertyName="PhoneAndName"
                                                               Placeholder="Search a phone number..."
                                                               OnChanged="(Customer customer) => OnAutoCompleteChanged(customer)" />
+                                                <ValidationMessage For="() => CurrentOrder.CustomerID" />
                                                 @if (CurrentOrder.OrderedBy is null)
                                                 {
                                                     <span class="text-muted">No customer selected.</span>
@@ -179,7 +193,15 @@
                                         <div class="form-group row mb-2">
                                             <div class="col-md-5 col-md-12">
                                                 <label>Payment Type</label>
-                                                <TextInput @bind-Value="@CurrentOrder.PaymentType" Placeholder="Enter payment type" />
+                                                <InputSelect class="form-select" @bind-Value="@CurrentOrder.PaymentType">
+                                                    <option selected disabled>Select a Payment Type</option>
+                                                    <option value="Cash">Cash</option>
+                                                    <option value="Credit">Credit</option>
+                                                    <option value="CashAndCredit">Cash & Credit</option>
+                                                    <option value="ETransfer">E-Transfer</option>
+                                                    <option value="Other">Other</option>
+                                                </InputSelect>
+                                                <ValidationMessage For="() => CurrentOrder.PaymentType" />
                                             </div>
                                         </div>
                                         <div class="form-group row mb-2">
@@ -205,7 +227,10 @@
                                             </div>
                                         </Card>
                                         <div class="row mb-2">
-                                                <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Block=true>Proccess</Button>
+                                            <AuthorizeView Context="authcontext">
+                                                <span class="text-muted text-end mt-1 mb-1">This Order will be processed by <strong>@authcontext.User.Identity!.Name</strong></span>
+                                            </AuthorizeView>
+                                            <Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Block=true Size="ButtonSize.Large">Proccess Order</Button>
                                         </div>
                                     </EditForm>
                                 </CardBody>
@@ -213,7 +238,7 @@
                         </div>
                     </div>
                     @* Calculator *@
-                    <div class="row h-50">
+                    <div class="row" style="height: 36vh">
                         <div class="col bg-secondary">
                             <span><i class="fa-solid fa-calculator me-1"></i> Calculator</span>
                         </div>
@@ -231,6 +256,8 @@
     private int Amount { get; set; } = 1;
 
     private EditContext editContext { get; set; } = default!;
+    private ValidationMessageStore? messageStore;
+    private Button submitButton { get; set; } = default!;
 
     private Button ClearButton { get; set; } = default!;
     private ConfirmDialog ConfirmModal = default!;
@@ -243,9 +270,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentOrder = new();
+        CurrentOrder ??= new();
         editContext = new(CurrentOrder);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
         await LoadData();
+    }
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+
+        // Custom validation logic
+        if (CurrentOrder.OrderItems is null || CurrentOrder.OrderItems.Count <= 0)
+        {
+            messageStore?.Add(() => CurrentOrder.OrderItems!, "Cannot proccess when cart is empty.");
+        }
     }
 
     public async Task LoadData()
@@ -285,6 +324,7 @@
             });
 
             Amount = 1;
+            editContext.Validate();
         }
     }
 
@@ -336,17 +376,42 @@
             {
                 discount = 0;
             }
+
+            editContext.Validate();
+            return;
         }
-        else
-        {
-            CurrentOrder.CustomerID = 0;
-            CurrentOrder.OrderedBy = null;
-            discount = 0;
-        }
+
+        CurrentOrder.CustomerID = 0;
+        CurrentOrder.OrderedBy = null;
+        discount = 0;
     }
 
     public async Task SubmitOrder()
     {
-        
+        submitButton.ShowLoading("Proccessing...");
+
+        var confirmation = await ConfirmModal.ShowAsync(
+            title: "Process Payment for Customer",
+            message1: "Please proccess the customer's payment in person to complete the transaction.",
+            message2: "Have you completed the transaction?"
+        );
+
+        if (confirmation)
+        {
+            var result = await OrderService.CreateOrder(CurrentOrder);
+
+            if (result is null || !result.HasValue)
+            {
+                submitButton.HideLoading();
+                return;
+            }
+
+            submitButton.HideLoading();
+            Navigation.Refresh(true);
+        }
+
+        submitButton.HideLoading();
+        return;
+
     }
 }

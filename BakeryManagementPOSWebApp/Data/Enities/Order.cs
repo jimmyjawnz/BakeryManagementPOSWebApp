@@ -1,10 +1,13 @@
 ﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
     public class Order : Entity
     {
-        public int CustomerID { get; set; }
+        [Required(ErrorMessage = "A valid Customer must be selected.")]
+        public int? CustomerID { get; set; }
         public Customer? OrderedBy { get; set; }
 
         public int? EmployeeID { get; set; }
@@ -12,6 +15,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
 
+        [Required(ErrorMessage = "Payment type is required.")]
         public string? PaymentType { get; set; }
 
         public string? Notes { get; set; }
