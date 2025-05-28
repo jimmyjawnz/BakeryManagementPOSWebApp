@@ -15,7 +15,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
 
-        [Required(ErrorMessage = "Payment type is required.")]
+        [Required(ErrorMessage = "A valid Payment Type is required.")]
         public string? PaymentType { get; set; }
 
         public string? Notes { get; set; }

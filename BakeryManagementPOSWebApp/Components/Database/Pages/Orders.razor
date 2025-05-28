@@ -25,18 +25,18 @@
 		@if (ModalTitle.Contains("Information"))
 		{
 			<h3>
-				@order.OrderIdentifier 
-				@if (order.IsComplete is null)
+				<span class="">@order.OrderIdentifier</span>
+				@if (order.DateProcessed is not null && order.PickupDate is not null)
 				{
-					<Badge Class="float-end" Color="BadgeColor.Warning">Needs Processing</Badge>
+					<Badge Color="BadgeColor.Success">Complete</Badge>
 				}
-				else if (order.IsComplete == true)
+				else if (order.DateProcessed is null && order.PickupDate is null)
 				{
-					<Badge Class="float-end" Color="BadgeColor.Warning">Complete</Badge>
+					<Badge Color="BadgeColor.Info">Awaiting Pickup</Badge>
 				}
 				else
 				{
-					<Badge Class="float-end" Color="BadgeColor.Warning">Awaiting Pickup</Badge>
+					<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
 				}
 			</h3>
 
@@ -183,17 +183,17 @@ else
 					<tr @ondblclick="(() => ShowInfoModal(item))">
 						<td>@item.OrderIdentifier</td>
 						<td>
-							@if (order.IsComplete is null)
+							@if (item.DateProcessed is not null && item.PickupDate is not null)
 							{
-								<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
+								<Badge Color="BadgeColor.Success">Complete</Badge>
 							}
-							else if (order.IsComplete == true)
+							else if (item.DateProcessed is null && item.PickupDate is null)
 							{
-								<Badge Color="BadgeColor.Warning">Complete</Badge>
+								<Badge Color="BadgeColor.Info">Awaiting Pickup</Badge>
 							}
 							else
 							{
-								<Badge Color="BadgeColor.Warning">Awaiting Pickup</Badge>
+								<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
 							}
 						</td>
 						<td>@item.TotalSum</td>

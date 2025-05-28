@@ -120,40 +120,43 @@
                                 @if (CurrentOrder.OrderItems is null || CurrentOrder.OrderItems.Count <= 0)
                                 {
                                     <tr>
-					                    <td colspan="4" class="text-center bg-light">
+                                        <td colspan="4" class="text-center bg-light-subtle">
                                             <UserMessage Color="AlertColor.Secondary" Type="MessageType.Info" Message="Cart is empty." />
                                         </td>
                                     </tr>
                                 }
-                                @foreach (var item in CurrentOrder.OrderItems!)
+                                else
                                 {
-                                    <tr>
-                                        <td class="text-center">
-                                            <Button @onclick="() => ChangeQty(item, 1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">+</Button>
-                                            @item.Quantity
-                                            <Button @onclick="() => ChangeQty(item, -1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">-</Button>
-                                        </td>
-                                        <td>
-                                            @if (item.ProductName.Length > 53)
-                                            {
-                                                <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
-                                                    @item.ProductName.Substring(0, Math.Min(50, item.ProductName.Length))...
-                                                </Tooltip>
-                                            }
-                                            else
-                                            {
-                                                @item.ProductName
-                                            }
-                                        </td>
-                                        <td class="text-end">
-                                            @String.Format("{0:C2}", item.RowPrice)
-                                            <br />
-                                            <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-                                        </td>
-                                    </tr>
+                                    @foreach (var item in CurrentOrder.OrderItems!)
+                                    {
+                                        <tr>
+                                            <td class="text-center align-content-center">
+                                                <Button @onclick="() => ChangeQty(item, 1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">+</Button>
+                                                @item.Quantity
+                                                <Button @onclick="() => ChangeQty(item, -1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">-</Button>
+                                            </td>
+                                            <td class="align-content-center">
+                                                @if (item.ProductName.Length > 53)
+                                                {
+                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
+                                                        @item.ProductName.Substring(0, Math.Min(50, item.ProductName.Length))...
+                                                    </Tooltip>
+                                                }
+                                                else
+                                                {
+                                                    @item.ProductName
+                                                }
+                                            </td>
+                                            <td class="text-end align-content-center">
+                                                @String.Format("{0:C2}", item.RowPrice)
+                                                <br />
+                                                <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
+                                            </td>
+                                            <td class="text-end align-content-center">
+                                                <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+                                            </td>
+                                        </tr>
+                                    }
                                 }
                             </tbody>
                         </table>
@@ -161,7 +164,7 @@
                 </div>
                 <div class="col-md-6">
                     @* Payment Proccessing *@
-                    <div class="row" style="height: 58vh">
+                    <div class="row" style="height: 62vh">
                         <div class="col p-0">
                             <Card Class="border-primary border-5 h-100">
                                 <h4 class="card-header mt-2">Order Proccessing</h4>
@@ -239,7 +242,7 @@
                         </div>
                     </div>
                     @* Calculator *@
-                    <div class="row" style="height: 36vh">
+                    <div class="row" style="height: 32vh">
                         <div class="col bg-secondary">
                             <span><i class="fa-solid fa-calculator me-1"></i> Calculator</span>
                         </div>
@@ -402,6 +405,8 @@
         if (confirmation)
         {
             CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User);
+            CurrentOrder.DateProcessed = DateTime.Now;
+            CurrentOrder.PickupDate = DateTime.Now;
 
             var result = await OrderService.CreateOrder(CurrentOrder);
 
