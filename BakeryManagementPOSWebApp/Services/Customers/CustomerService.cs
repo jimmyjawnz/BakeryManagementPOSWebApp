@@ -22,9 +22,9 @@ namespace BakeryManagementPOSWebApp.Services.Customers
         {
             return await _dbContext.Customers.Where(p => p.DateDeleted == null).ToListAsync();
         }
-        public async Task<List<Customer>> GetExistingCustomers()
+        public async Task<List<Customer>> GetExistingCustomers(string filter)
         {
-            return await _dbContext.Customers.Where(p => p.DateDeleted == null).ToListAsync();
+            return await _dbContext.Customers.Where(p => p.DateDeleted == null && p.PhoneNumber.Contains(filter)).ToListAsync();
         }
         public async Task<List<Customer>> GetTrashedCustomers()
         {

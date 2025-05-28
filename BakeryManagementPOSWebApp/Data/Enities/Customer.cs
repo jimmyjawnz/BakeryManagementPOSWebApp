@@ -23,9 +23,31 @@ namespace BakeryManagementPOSWebApp.Data.Enities
                 {
                     return FirstName + " " + LastName;
                 }
-                else
+                else if(!FirstName.IsNullOrEmpty())
+                {
+                    return FirstName;
+                }
                 {
                     return "";
+                }
+            }
+        }
+
+        public string PhoneAndName
+        {
+            get
+            {
+                if (!FirstName.IsNullOrEmpty() && !LastName.IsNullOrEmpty())
+                {
+                    return PhoneNumber + " (" + FirstName + " " + LastName + ")";
+                }
+                else if (!FirstName.IsNullOrEmpty())
+                {
+                    return PhoneNumber + " (" + FirstName + ")";
+                }
+                else
+                {
+                    return PhoneNumber;
                 }
             }
         }

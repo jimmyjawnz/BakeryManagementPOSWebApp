@@ -205,7 +205,7 @@ else
 	{
 		customers = null;
 		await Task.Delay(10);
-		customers = await Service.GetExistingCustomers();
+		customers = await Service.GetAvailableCustomers();
 	}
 
 	private void RefreshData()

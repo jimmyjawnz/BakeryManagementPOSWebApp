@@ -12,6 +12,8 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
 
+        public string? PaymentType { get; set; }
+
         public string? Notes { get; set; }
 
         public DateTime? PickupDate { get; set; }

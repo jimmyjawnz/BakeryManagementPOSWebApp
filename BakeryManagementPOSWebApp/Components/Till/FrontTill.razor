@@ -1,14 +1,14 @@
 ﻿@layout EmptyLayout
 @page "/till"
 
-
 @attribute [Authorize]
 
 <PageTitle>Front Till</PageTitle>
 <title>Front Till</title>
 
 @inject ProductService ProductService
-
+@inject CustomerService CustomerService
+@inject EmployeeService EmployeeService
 @inject NavigationManager Navigation
 
 @rendermode @(new InteractiveServerRenderMode(false))
@@ -135,7 +135,11 @@
                                                 @item.ProductName
                                             }
                                         </td>
-                                        <td class="text-end">@String.Format("{0:C2}", item.Product!.Price)</td>
+                                        <td class="text-end">
+                                            @String.Format("{0:C2}", item.RowPrice)
+                                            <br />
+                                            <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
+                                        </td>
                                         <td class="text-end">
                                             <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
                                         </td>
@@ -148,10 +152,64 @@
                 <div class="col-md-6">
                     @* Payment Proccessing *@
                     <div class="row h-50">
-                        <div class="col bg-warning">
-                            <span><i class="fa-solid fa-credit-card me-1"></i> Employee and Payment</span>
-                            <EditForm FormName="OrderForm" EditContext="editContext" OnValidSubmit="SubmitOrder">
-                            </EditForm>
+                        <div class="col p-0">
+                            <Card Class="border-primary border-5">
+                                <h4 class="card-header mt-2">Order Proccessing</h4>
+                                <CardBody>
+                                    <EditForm FormName="OrderForm" EditContext="editContext" OnValidSubmit="SubmitOrder">
+                                        <div class="form-group row mb-2">
+                                            <div class="col-md-5 col-md-12">
+                                                <label>Customer</label>
+                                                <AutoComplete @bind-Value="@customerPhone"
+                                                              TItem="Customer"
+                                                              DataProvider="CustomersDataProvider"
+                                                              PropertyName="PhoneAndName"
+                                                              Placeholder="Search a phone number..."
+                                                              OnChanged="(Customer customer) => OnAutoCompleteChanged(customer)" />
+                                                @if (CurrentOrder.OrderedBy is null)
+                                                {
+                                                    <span class="text-muted">No customer selected.</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Selected: @CurrentOrder.OrderedBy.PhoneAndName</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="form-group row mb-2">
+                                            <div class="col-md-5 col-md-12">
+                                                <label>Payment Type</label>
+                                                <TextInput @bind-Value="@CurrentOrder.PaymentType" Placeholder="Enter payment type" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row mb-2">
+                                            <div class="col-md-5 col-md-12">
+                                                <label>Discount Amount (%)</label>
+                                                <NumberInput TValue="int" @bind-Value="@discount" EnableMinMax="true" Min="0" Max="100" />
+                                            </div>
+                                        </div>
+                                        <Card Class="border-secondary text-end mb-2">
+                                            <div class="form-group row mb-2">
+                                                <label class="col-md-6 col-form-label">Sum of Items: </label>
+                                                <div class="col-md-6">
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum)" />
+                                                </div>
+                                                <label class="col-md-6 col-form-label">Discount: </label>
+                                                <div class="col-md-6">
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum * (discount / 100.0m))" />
+                                                </div>
+                                                <label class="col-md-6 col-form-label">Total Sum: </label>
+                                                <div class="col-md-6">
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum - (CurrentOrder.TotalSum * (discount / 100.0m)))" />
+                                                </div>
+                                            </div>
+                                        </Card>
+                                        <div class="row mb-2">
+                                                <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Block=true>Proccess</Button>
+                                        </div>
+                                    </EditForm>
+                                </CardBody>
+                            </Card>
                         </div>
                     </div>
                     @* Calculator *@
@@ -178,6 +236,10 @@
     private ConfirmDialog ConfirmModal = default!;
 
     private Order CurrentOrder { get; set; } = new();
+
+    private string? customerPhone;
+    private int discount { get; set; } = 0;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -211,7 +273,7 @@
         }
     }
 
-    public async Task AddToCart(Product product)
+    public void AddToCart(Product product)
     {
         if (product is not null)
         {
@@ -224,21 +286,13 @@
 
             Amount = 1;
         }
-        else
-        {
-            await LoadData();
-        }
     }
 
-    public async Task RemoveFromCart(OrderItem orderItem)
+    public void RemoveFromCart(OrderItem orderItem)
     {
         if (orderItem is not null)
         {
             CurrentOrder.OrderItems!.Remove(orderItem);
-        }
-        else
-        {
-            await LoadData();
         }
 
     }
@@ -257,6 +311,37 @@
                     return;
                 CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated)!.Quantity += amount;
             }
+        }
+    }
+
+    private async Task<AutoCompleteDataProviderResult<Customer>> CustomersDataProvider(AutoCompleteDataProviderRequest<Customer> request)
+    {
+        var customers = await CustomerService.GetExistingCustomers(request.Filter.Value);
+        return await Task.FromResult(new AutoCompleteDataProviderResult<Customer> { Data = customers, TotalCount = customers.Count() });
+    }
+
+    private async Task OnAutoCompleteChanged(Customer customer)
+    {
+        if (customer is not null) {
+            CurrentOrder.CustomerID = customer.Id;
+            CurrentOrder.OrderedBy = customer;
+
+            var isEmployee = await EmployeeService.GetEmployeeByPhoneNumber(customer.PhoneNumber);
+
+            if (isEmployee is not null)
+            {
+                discount = 50;
+            }
+            else
+            {
+                discount = 0;
+            }
+        }
+        else
+        {
+            CurrentOrder.CustomerID = 0;
+            CurrentOrder.OrderedBy = null;
+            discount = 0;
         }
     }
 
