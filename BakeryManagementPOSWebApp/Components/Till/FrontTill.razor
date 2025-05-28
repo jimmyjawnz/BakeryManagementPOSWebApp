@@ -9,6 +9,7 @@
 @inject ProductService ProductService
 @inject CustomerService CustomerService
 @inject EmployeeService EmployeeService
+@inject UserManager<Employee> UserManager
 @inject OrderService OrderService
 @inject NavigationManager Navigation
 
@@ -250,6 +251,8 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
 
     private List<Product>? products { get; set; } = new();
 
@@ -398,6 +401,8 @@
 
         if (confirmation)
         {
+            CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User);
+
             var result = await OrderService.CreateOrder(CurrentOrder);
 
             if (result is null || !result.HasValue)

@@ -19,7 +19,7 @@
 	   UseStaticBackdrop="true"
 	   CloseOnEscape="false"
 	   IsVerticallyCentered="true"
-	   Fullscreen="ModalFullscreen.ExtraLargeDown">
+	   Fullscreen="ModalFullscreen.Always">
 		<BodyTemplate>
 
 		@if (ModalTitle.Contains("Information"))
@@ -28,15 +28,15 @@
 				@order.OrderIdentifier 
 				@if (order.IsComplete is null)
 				{
-					<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
+					<Badge Class="float-end" Color="BadgeColor.Warning">Needs Processing</Badge>
 				}
 				else if (order.IsComplete == true)
 				{
-					<Badge Color="BadgeColor.Warning">Complete</Badge>
+					<Badge Class="float-end" Color="BadgeColor.Warning">Complete</Badge>
 				}
 				else
 				{
-					<Badge Color="BadgeColor.Warning">Awaiting Pickup</Badge>
+					<Badge Class="float-end" Color="BadgeColor.Warning">Awaiting Pickup</Badge>
 				}
 			</h3>
 
@@ -67,7 +67,7 @@
 					<div class="form-group row mb-2">
 						<label class="col-md-2 col-form-label">Processed by: </label>
 						<div class="col-md-4">
-							<input class="form-control-plaintext" readonly="" value="@order.ProcessedBy!.FullName" />
+							<input class="form-control-plaintext" readonly="" value="@order.EmployeeID" />
 						</div>
 					</div>
 					<div class="form-group row mb-2">
@@ -93,7 +93,7 @@
 			</div>
 
 			<Accordion>
-				<AccordionItem Title="@(order.CustomerID.ToString() + "-" + @order.OrderedBy!.FullName)">
+				<AccordionItem Title="@(order.CustomerID.ToString() + "-")">
 					<Content>
 						<div class="form-group row mb-2">
 							<label class="col-md-2 col-form-label">ID: </label>
@@ -101,7 +101,7 @@
 								<input class="form-control-plaintext" readonly="" value="@order.CustomerID" />
 							</div>
 						</div>
-						<div class="form-group row mb-2">
+						@* <div class="form-group row mb-2">
 							<label class="col-md-2 col-form-label">Phone Number: </label>
 							<div class="col-md-10">
 								<input class="form-control-plaintext" readonly="" value="@order.OrderedBy.PhoneNumber" />
@@ -112,7 +112,7 @@
 							<div class="col-md-10">
 								<input class="form-control-plaintext" readonly="" value="@order.OrderedBy.EmailAddress" />
 							</div>
-						</div>
+						</div> *@
 					</Content>
 				</AccordionItem>
 			</Accordion>

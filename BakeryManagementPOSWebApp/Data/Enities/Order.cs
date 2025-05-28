@@ -10,7 +10,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public int? CustomerID { get; set; }
         public Customer? OrderedBy { get; set; }
 
-        public int? EmployeeID { get; set; }
+        public string? EmployeeID { get; set; }
         public Employee? ProcessedBy { get; set; }
 
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
