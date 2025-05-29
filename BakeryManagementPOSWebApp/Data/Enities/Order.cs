@@ -18,6 +18,8 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         [Required(ErrorMessage = "A valid Payment Type is required.")]
         public string? PaymentType { get; set; }
 
+        public decimal Discount { get; set; } = 0.00m;
+
         public string? Notes { get; set; }
 
         public DateTime? PickupDate { get; set; }

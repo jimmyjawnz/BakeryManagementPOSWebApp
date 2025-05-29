@@ -19,69 +19,166 @@
 	   UseStaticBackdrop="true"
 	   CloseOnEscape="false"
 	   IsVerticallyCentered="true"
-	   Fullscreen="ModalFullscreen.Always">
+	   Size="ModalSize.ExtraLarge">
 		<BodyTemplate>
 
 		@if (ModalTitle.Contains("Information"))
 		{
-			<h3>
-				<span class="">@order.OrderIdentifier</span>
-				@if (order.DateProcessed is not null && order.PickupDate is not null)
+			<h3 class="position-sticky top-0 pt-2 pb-2 bg-white">
+				<span>@order.OrderIdentifier</span>
+				@if (order.IsComplete is null)
 				{
-					<Badge Color="BadgeColor.Success">Complete</Badge>
+					<Badge Color="BadgeColor.Warning" Class="float-end">Needs Processing</Badge>
+					
 				}
-				else if (order.DateProcessed is null && order.PickupDate is null)
+				else if (order.IsComplete == true)
 				{
-					<Badge Color="BadgeColor.Info">Awaiting Pickup</Badge>
+					<Badge Color="BadgeColor.Success" Class="float-end">Complete</Badge>
 				}
 				else
 				{
-					<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
+					<Badge Color="BadgeColor.Info" Class="float-end">Awaiting Pickup</Badge>
 				}
 			</h3>
 
 			<div class="row mb-2">
 				<div class="col-md-6">
 					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">ID: </label>
-						<div class="col-md-4">
+						<label class="col-md-4 col-form-label">ID: </label>
+						<div class="col-md-8">
 							<input class="form-control-plaintext" readonly="" value="@order.Id" />
 						</div>
 					</div>
 
 					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Date Created: </label>
-						<div class="col-md-4">
+						<label class="col-md-4 col-form-label">Date Created: </label>
+						<div class="col-md-8">
 							<input class="form-control-plaintext" readonly="" value="@order.DateCreatedStr" />
 						</div>
 					</div>
 
 					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Last Updated: </label>
-						<div class="col-md-4">
+						<label class="col-md-4 col-form-label">Last Updated: </label>
+						<div class="col-md-8">
 							<input class="form-control-plaintext" readonly="" value="@order.DateUpdatedStr" />
 						</div>
 					</div>
 				</div>
+
 				<div class="col-md-6">
 					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Processed by: </label>
-						<div class="col-md-4">
-							<input class="form-control-plaintext" readonly="" value="@order.EmployeeID" />
-						</div>
-					</div>
-					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Processed Date: </label>
-						<div class="col-md-4">
-							<input class="form-control-plaintext" readonly="" value="@order.DateProcessedStr" />
-						</div>
-					</div>
-					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Pickup Date: </label>
-						<div class="col-md-4">
+						<label class="col-md-4 col-form-label">Pickup Date: </label>
+						<div class="col-md-8">
 							<input class="form-control-plaintext" readonly="" value="@order.PickupDateStr" />
 						</div>
 					</div>
+					<div class="form-group row mb-2">
+						<label class="col-md-4 col-form-label">Processed by: </label>
+						<div class="col-md-8">
+							<input class="form-control-plaintext" readonly="" value="@order.ProcessedBy!.FullName" />
+						</div>
+					</div>
+					<div class="form-group row mb-2">
+						<label class="col-md-4 col-form-label">Processed Date: </label>
+						<div class="col-md-8">
+							<input class="form-control-plaintext" readonly="" value="@order.DateProcessedStr" />
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row mb-2">
+				<h4>Ordered by</h4>
+				<div class="col-md-6">
+					<Accordion >
+						<AccordionItem Active=true Title="@order.OrderedBy!.PhoneAndName">
+							<Content>
+
+								<div class="form-group row mb-2">
+									<label class="col-md-4 col-form-label">ID: </label>
+									<div class="col-md-8">
+										<input class="form-control-plaintext" readonly="" value="@order.CustomerID" />
+									</div>
+								</div>
+								<div class="form-group row mb-2">
+									<label class="col-md-4 col-form-label">Name: </label>
+									<div class="col-md-8">
+										<input class="form-control-plaintext" readonly="" value="@order.OrderedBy!.FullName" />
+									</div>
+								</div>
+								<div class="form-group row mb-2">
+									<label class="col-md-4 col-form-label">Phone Number: </label>
+									<div class="col-md-8">
+										<input class="form-control-plaintext" readonly="" value="@order.OrderedBy!.PhoneNumber" />
+									</div>
+								</div>
+								<div class="form-group row mb-2">
+									<label class="col-md-4 col-form-label">Email: </label>
+									<div class="col-md-8">
+										<input class="form-control-plaintext" readonly="" value="@order.OrderedBy!.EmailAddress" />
+									</div>
+								</div>
+							</Content>
+						</AccordionItem>
+					</Accordion>
+				</div>
+			</div>
+
+			<div class="row mb-2">
+				<h4>Items</h4>
+				<div class="col-md-6">
+					<table class="table table-striped table-hover">
+                            <thead class="table-primary" >
+                                <tr>
+                                    <th width="5%" class="text-center">Qty</th>
+                                    <th>Product</th>
+                                    <th width="20%" class="text-end">Row Price</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                @foreach (var item in order.OrderItems!)
+                                {
+                                    <tr>
+										<td class="text-center align-content-center">
+                                            @item.Quantity
+                                        </td>
+										<td class="align-content-center">
+											@item.ProductName
+										</td>
+                                        <td class="text-end align-content-center">
+                                            @String.Format("{0:C2}", item.RowPrice)
+                                        </td>
+                                    </tr>
+                                }
+								<tr style="border-top: solid 3px black;">
+									<td colspan="2" class="text-end align-content-center">
+										Sum of Items
+									</td>
+									<td class="text-end align-content-center">
+										@String.Format("{0:C2}", order.TotalSum)
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2" class="text-end align-content-center">
+										Discount Amount
+									</td>
+									<td class="text-end align-content-center">
+										@String.Format("{0:C2}", order.Discount)
+									</td>
+								</tr>
+								<tr style="border-top: solid 5px black;">
+									<td colspan="2" class="text-end align-content-center">
+										<strong>Total Sum</strong>
+									</td>
+									<td class="text-end align-content-center">
+										<strong>@String.Format("{0:C2}", order.TotalSum - order.Discount)</strong>
+									</td>
+								</tr>
+                            </tbody>
+                        </table>
 				</div>
 			</div>
 
@@ -89,40 +186,18 @@
 
 			<div class="row mb-2">
 				<h5>Notes</h5>
-				<p>@order.Notes</p>
+				@if(String.IsNullOrEmpty(order.Notes))
+				{
+					<p>None.</p>
+				}
+				else
+				{
+					<p>@order.Notes</p>
+				}
 			</div>
 
-			<Accordion>
-				<AccordionItem Title="@(order.CustomerID.ToString() + "-")">
-					<Content>
-						<div class="form-group row mb-2">
-							<label class="col-md-2 col-form-label">ID: </label>
-							<div class="col-md-10">
-								<input class="form-control-plaintext" readonly="" value="@order.CustomerID" />
-							</div>
-						</div>
-						@* <div class="form-group row mb-2">
-							<label class="col-md-2 col-form-label">Phone Number: </label>
-							<div class="col-md-10">
-								<input class="form-control-plaintext" readonly="" value="@order.OrderedBy.PhoneNumber" />
-							</div>
-						</div>
-						<div class="form-group row mb-2">
-							<label class="col-md-2 col-form-label">Email: </label>
-							<div class="col-md-10">
-								<input class="form-control-plaintext" readonly="" value="@order.OrderedBy.EmailAddress" />
-							</div>
-						</div> *@
-					</Content>
-				</AccordionItem>
-			</Accordion>
+			<hr />
 
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Total Sum: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", @order.TotalSum)" />
-				</div>
-			</div>
 			<div class="form-group row">
 				<div class="col-md-12">
 					<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
@@ -196,7 +271,7 @@ else
 								<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
 							}
 						</td>
-						<td>@item.TotalSum</td>
+						<td>@String.Format("{0:C2}", item.TotalSum)</td>
 						<td>@item.Notes</td>
 						<td class="text-center">
 							<AuthorizeView Roles="Manager, Admin">

@@ -12,21 +12,10 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public Product? Product { get; set; }
 
         [Required]
-        public decimal RowPrice
-        {
-            get
-            {
-                return Product!.Price * Quantity;
-            }
-        }
+        public decimal RowPrice { get; set; }
 
-        public string ProductName
-        {
-            get
-            {
-                return Product!.Name;
-            }
-        }
+        [Required]
+        public string ProductName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "No Order Relation.")]
         public int OrderId { get; set; }

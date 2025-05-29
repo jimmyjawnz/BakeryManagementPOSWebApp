@@ -130,12 +130,12 @@
                                     @foreach (var item in CurrentOrder.OrderItems!)
                                     {
                                         <tr>
-                                            <td class="text-center align-content-center">
+                                            <td class="text-center">
                                                 <Button @onclick="() => ChangeQty(item, 1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">+</Button>
                                                 @item.Quantity
                                                 <Button @onclick="() => ChangeQty(item, -1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">-</Button>
                                             </td>
-                                            <td class="align-content-center">
+                                            <td>
                                                 @if (item.ProductName.Length > 53)
                                                 {
                                                     <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
@@ -147,12 +147,12 @@
                                                     @item.ProductName
                                                 }
                                             </td>
-                                            <td class="text-end align-content-center">
-                                                @String.Format("{0:C2}", item.RowPrice)
+                                            <td class="text-end">
+                                                @String.Format("{0:C2}", item.Product!.Price * item.Quantity)
                                                 <br />
                                                 <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
                                             </td>
-                                            <td class="text-end align-content-center">
+                                            <td class="text-end">
                                                 <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
                                             </td>
                                         </tr>
@@ -325,8 +325,10 @@
             CurrentOrder.OrderItems!.Add(new OrderItem()
             {
                 Product = product,
+                ProductName = product.Name,
                 ProductId = product.Id,
-                Quantity = Amount
+                Quantity = Amount,
+                RowPrice = product.Price * Amount
             });
 
             Amount = 1;

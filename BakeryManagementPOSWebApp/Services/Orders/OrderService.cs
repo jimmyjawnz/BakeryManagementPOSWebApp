@@ -27,7 +27,11 @@ namespace BakeryManagementPOSWebApp.Services.Orders
         }
         public async Task<List<Order>> GetExistingOrders()
         {
-            return await _dbContext.Orders.Where(p => p.DateDeleted == null).ToListAsync();
+            return await _dbContext.Orders
+                .Include(o => o.OrderedBy)
+                .Include(o => o.OrderItems)
+                .Include(o => o.ProcessedBy)
+                .Where(p => p.DateDeleted == null).ToListAsync();
         }
         public async Task<List<Order>> GetTrashedOrders()
         {
@@ -42,7 +46,11 @@ namespace BakeryManagementPOSWebApp.Services.Orders
 
         public async Task<Order> GetOrder(int id)
         {
-            return await _dbContext.Orders.Where(p => p.Id == id).FirstAsync();
+            return await _dbContext.Orders
+                .Include(o => o.OrderedBy)
+                .Include(o => o.OrderItems)
+                .Include(o => o.ProcessedBy)
+                .Where(o => o.Id == id).FirstAsync();
         }
 
         public async Task<int> UpdateOrder(Order order)
