@@ -148,7 +148,7 @@
                                                 }
                                             </td>
                                             <td class="text-end">
-                                                @String.Format("{0:C2}", item.Product!.Price * item.Quantity)
+                                                @String.Format("{0:C2}", item.RowPrice)
                                                 <br />
                                                 <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
                                             </td>
@@ -167,7 +167,7 @@
                     <div class="row" style="height: 62vh">
                         <div class="col p-0">
                             <Card Class="border-primary border-5 h-100">
-                                <h4 class="card-header mt-2">Order Proccessing</h4>
+                                <h4 class="card-header mt-2">Order Processing</h4>
                                 <CardBody>
                                     <EditForm FormName="OrderForm" EditContext="editContext" OnValidSubmit="SubmitOrder">
                                         <DataAnnotationsValidator />
@@ -211,22 +211,22 @@
                                         <div class="form-group row mb-2">
                                             <div class="col-md-5 col-md-12">
                                                 <label>Discount Amount (%)</label>
-                                                <NumberInput TValue="int" @bind-Value="@discount" EnableMinMax="true" Min="0" Max="100" />
+                                                <NumberInput TValue="int" ValueExpression="() => CurrentOrder.DiscountPercent" ValueChanged="(value) => ChangedDiscountPercent(value)" EnableMinMax="true" Min="0" Max="100" />
                                             </div>
                                         </div>
                                         <Card Class="border-secondary text-end mb-2">
                                             <div class="form-group row mb-2">
                                                 <label class="col-md-6 col-form-label">Sum of Items: </label>
                                                 <div class="col-md-6">
-                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum)" />
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.SumOfItems)" />
                                                 </div>
                                                 <label class="col-md-6 col-form-label">Discount: </label>
                                                 <div class="col-md-6">
-                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum * (discount / 100.0m))" />
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.DiscountAmount)" />
                                                 </div>
-                                                <label class="col-md-6 col-form-label">Total Sum: </label>
+                                                <label class="col-md-6 col-form-label"><strong>Total: </strong></label>
                                                 <div class="col-md-6">
-                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalSum - (CurrentOrder.TotalSum * (discount / 100.0m)))" />
+                                                    <input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", CurrentOrder.TotalAmount)" />
                                                 </div>
                                             </div>
                                         </Card>
@@ -234,7 +234,7 @@
                                             <AuthorizeView Context="authcontext">
                                                 <span class="text-muted text-end mt-1 mb-1">This Order will be processed by <strong>@authcontext.User.Identity!.Name</strong></span>
                                             </AuthorizeView>
-                                            <Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Block=true Size="ButtonSize.Large">Proccess Order</Button>
+                                            <Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Block=true Size="ButtonSize.Large">Process Order</Button>
                                         </div>
                                     </EditForm>
                                 </CardBody>
@@ -300,6 +300,17 @@
         products = await ProductService.GetAvailableProducts();
     }
 
+    private void UpdatedCart()
+    {
+        CurrentOrder.CalcTotalAmount();
+    }
+
+    private void ChangedDiscountPercent(int value)
+    {
+        CurrentOrder.DiscountPercent = value;
+        UpdatedCart();
+    }
+
     public async Task ClearCart()
     {
         if (CurrentOrder.OrderItems!.Count <= 0)
@@ -315,6 +326,7 @@
         if (confirmation)
         {
             CurrentOrder.OrderItems!.Clear();
+            UpdatedCart();
         }
     }
 
@@ -328,11 +340,12 @@
                 ProductName = product.Name,
                 ProductId = product.Id,
                 Quantity = Amount,
+                ProductPrice = product.Price,
                 RowPrice = product.Price * Amount
             });
 
             Amount = 1;
-            editContext.Validate();
+            UpdatedCart();
         }
     }
 
@@ -341,6 +354,7 @@
         if (orderItem is not null)
         {
             CurrentOrder.OrderItems!.Remove(orderItem);
+            UpdatedCart();
         }
 
     }
@@ -351,14 +365,17 @@
         {
             if (orderItem.Quantity <= 1 && amount < 0)
             {
-                CurrentOrder.OrderItems!.Remove(orderItem);
+                RemoveFromCart(orderItem);
             }
             else if (orderItem.Quantity <= 99)
             {
                 if (orderItem.Quantity == 99 && amount > 0)
                     return;
-                CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated)!.Quantity += amount;
+                var item = CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated);
+                item!.Quantity += amount;
+                item.CalcRowPrice();
             }
+            UpdatedCart();
         }
     }
 
@@ -378,11 +395,11 @@
 
             if (isEmployee is not null)
             {
-                discount = 50;
+                CurrentOrder.DiscountPercent = 50;
             }
             else
             {
-                discount = 0;
+                CurrentOrder.DiscountPercent = 0;
             }
 
             editContext.Validate();
@@ -391,7 +408,7 @@
 
         CurrentOrder.CustomerID = 0;
         CurrentOrder.OrderedBy = null;
-        discount = 0;
+        CurrentOrder.DiscountPercent = 0;
     }
 
     public async Task SubmitOrder()
