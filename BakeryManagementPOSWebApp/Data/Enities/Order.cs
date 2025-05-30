@@ -49,7 +49,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         {
             get
             {
-                return Id.ToString() + "-" + CustomerID.ToString();
+                return Id.ToString("000000") + "-" + CustomerID!.Value.ToString("0000");
             }
         }
 

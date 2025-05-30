@@ -11,13 +11,10 @@ namespace BakeryManagementPOSWebApp.Services.Orders
     public class OrderService
     {
         readonly ApplicationDbContext _dbContext;
-        readonly CustomerService _customerService;
-        readonly UserManager<Employee> _userManager;
-        public OrderService(ApplicationDbContext dbContext, CustomerService customerService, UserManager<Employee> userManager)
+
+        public OrderService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
-            _customerService = customerService;
-            _userManager = userManager;
         }
 
         // Entity Specific
