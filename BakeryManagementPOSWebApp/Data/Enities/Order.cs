@@ -7,7 +7,6 @@ namespace BakeryManagementPOSWebApp.Data.Enities
     public class Order : Entity
     {
         // Customer who ordered
-        [Required(ErrorMessage = "A valid Customer must be selected.")]
         public int? CustomerID { get; set; }
         public Customer? OrderedBy { get; set; }
 
@@ -19,7 +18,6 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public ICollection<OrderItem>? OrderItems { get; set; } = [];
 
         // Payment type (Cash, Credit, etc.)
-        [Required(ErrorMessage = "A valid Payment Type is required.")]
         public string? PaymentType { get; set; }
 
         // Price sum of order items
@@ -49,7 +47,10 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         {
             get
             {
-                return Id.ToString("000000") + "-" + CustomerID!.Value.ToString("0000");
+                if(CustomerID is null)
+                    return string.Empty;
+
+                return Id.ToString("00000000") + "-" + CustomerID.Value.ToString("0000");
             }
         }
 
