@@ -19,26 +19,15 @@
 	   UseStaticBackdrop="true"
 	   CloseOnEscape="false"
 	   IsVerticallyCentered="true"
-	   Size="ModalSize.ExtraLarge">
+	   Size="ModalSize.ExtraLarge"
+	   Fullscreen="ModalFullscreen.Always">
 		<BodyTemplate>
 
 		@if (ModalTitle.Contains("Information"))
 		{
 			<h3 class="position-sticky top-0 pt-2 pb-2 bg-white">
 				<span>@order.OrderIdentifier</span>
-				@if (order.IsComplete is null)
-				{
-					<Badge Color="BadgeColor.Warning" Class="float-end">Needs Processing</Badge>
-					
-				}
-				else if (order.IsComplete == true)
-				{
-					<Badge Color="BadgeColor.Success" Class="float-end">Complete</Badge>
-				}
-				else
-				{
-					<Badge Color="BadgeColor.Info" Class="float-end">Awaiting Pickup</Badge>
-				}
+				<OrderStatus status="@order.IsComplete" Class="float-end" />
 			</h3>
 
 			<div class="row mb-2">
@@ -221,17 +210,9 @@
 		}
 		else 
 		{
-			<EditForm EditContext="editContext" FormName="AddOrder" OnValidSubmit="SubmitForm">
-				<DataAnnotationsValidator />
-
-
-				<div class="form-group row">
-					<div class="col-md-12">
-						<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
-						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">@ModalTitle</Button>
-					</div>
-				</div>
-			</EditForm>
+			<div style="height: 50vh;">
+				<BakeryManagementPOSWebApp.Components.Till.FrontTill EmptyOrder="true" CurrentOrder="@order" />
+			</div>
 		}
 	</BodyTemplate>
 </Modal>
@@ -273,18 +254,7 @@ else
 					<tr @ondblclick="(() => ShowInfoModal(item))">
 						<td>@item.OrderIdentifier</td>
 						<td class="text-center" style="font-size: larger;">
-							@if (item.DateProcessed is not null && item.PickupDate is not null)
-							{
-								<Badge Color="BadgeColor.Success">Complete</Badge>
-							}
-							else if (item.DateProcessed is null && item.PickupDate is null)
-							{
-								<Badge Color="BadgeColor.Info">Awaiting Pickup</Badge>
-							}
-							else
-							{
-								<Badge Color="BadgeColor.Warning">Needs Processing</Badge>
-							}
+							<OrderStatus status="@item.IsComplete" />
 						</td>
 						<td>@String.Format("{0:C2}", item.TotalAmount)</td>
 						<td>@item.Notes</td>
@@ -386,7 +356,7 @@ else
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowEditModal(Order item)
 	{
-		order = item;
+		order = await Service.GetOrder(item.Id);
 		ModalTitle = "Edit Order - " + order.Id;
 		//editContext = new EditContext(order);
 		await orderModal.ShowAsync();

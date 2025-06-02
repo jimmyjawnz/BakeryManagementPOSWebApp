@@ -45,8 +45,9 @@ namespace BakeryManagementPOSWebApp.Services.Orders
         {
             return await _dbContext.Orders
                 .Include(o => o.OrderedBy)
-                .Include(o => o.OrderItems)
                 .Include(o => o.ProcessedBy)
+                .Include(o => o.OrderItems!)
+                .ThenInclude(oi => oi.Product)
                 .Where(o => o.Id == id).FirstAsync();
         }
 

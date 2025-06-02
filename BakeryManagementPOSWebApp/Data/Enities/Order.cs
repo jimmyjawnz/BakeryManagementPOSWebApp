@@ -4,6 +4,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
+    public enum Status
+    {
+        Unknown,
+        Complete,
+        WaitingPickup,
+        PassedPickupDate,
+        NeedsProcessing
+    }
+
     public class Order : Entity
     {
         // Customer who ordered
@@ -56,21 +65,34 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 
         // Returns true if the order is processed and picked up,
         // false if not proccessed and picked up, and null otherwise
-        public bool? IsComplete
+        public Status IsComplete
         {
             get
             {
-                if (DateProcessed is not null && PickupDate is not null)
+                if (DateProcessed is not null && DatePickedUp is not null)
                 {
-                    return true;
+                    return Status.Complete;
                 }
-                else if (DateProcessed is null && PickupDate is null)
+                else if (DateProcessed is null && DatePickedUp is null)
                 {
-                    return false;
+                    if (PickupDate < DateTime.Now)
+                    {
+                        return Status.PassedPickupDate;
+                    }
+
+                    return Status.WaitingPickup;
+                }
+                else if (DateProcessed is not null && DatePickedUp is null)
+                {
+                    return Status.WaitingPickup;
+                }
+                else if (DateProcessed is null && DatePickedUp is not null)
+                {
+                    return Status.NeedsProcessing;
                 }
                 else
                 {
-                    return null;
+                    return Status.Unknown;
                 }
             }
         }

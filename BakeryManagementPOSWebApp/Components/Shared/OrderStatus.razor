@@ -1,0 +1,26 @@
+﻿@switch (status)
+{
+	case Status.Complete:
+		<Badge Color="BadgeColor.Success" Class="@Class">Completed</Badge>
+		break;
+	case Status.PassedPickupDate:
+		<Badge Color="BadgeColor.Warning" Class="@Class">Late Pickup</Badge>
+		break;
+	case Status.WaitingPickup:
+		<Badge Color="BadgeColor.Info" Class="@Class">Awaiting Pickup</Badge>
+		break;
+	case Status.NeedsProcessing:
+		<Badge Color="BadgeColor.Primary" Class="@Class">Needs Processing</Badge>
+		break;
+	default:
+		<Badge Color="BadgeColor.Dark" Class="@Class">Unknown</Badge>
+		break;
+}
+
+@code {
+	[Parameter]
+	public Status status { get; set; }
+
+	[Parameter]
+	public string? Class { get; set; }
+}
