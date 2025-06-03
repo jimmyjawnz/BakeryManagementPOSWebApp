@@ -6,14 +6,18 @@ namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
     public abstract class Entity
     {
         [Key]
+        [Column("id")]
         public int Id { get; set; }
 
         [Required]
+        [Column("created")]
         public DateTime Created { get; set; } = DateTime.Now;
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        [Column("last_updated")]
         public DateTime? LastUpdated { get; set; }
 
+        [Column("deleted")]
         public DateTime? Deleted { get; set; }
 
         public string DateCreated

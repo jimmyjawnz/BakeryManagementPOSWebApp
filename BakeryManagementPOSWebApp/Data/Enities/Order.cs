@@ -24,7 +24,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public Employee? ProcessedBy { get; set; }
 
         // Order items linked to the order
-        public ICollection<OrderItem>? OrderItems { get; set; } = [];
+        public ICollection<OrderItem> OrderItems { get; set; } = [];
 
         // Payment type (Cash, Credit, etc.)
         public string? PaymentType { get; set; }

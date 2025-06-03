@@ -1,55 +1,38 @@
 ﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
+    [Table("Customers")]
     public class Customer : Entity
     {
-        [Length(1, 25, ErrorMessage = "First name is too large.")]
-        public string? FirstName { get; set; } = string.Empty;
-        [Length(1, 25, ErrorMessage = "Last name is too large.")]
-        public string? LastName { get; set; } = string.Empty;
-        [Phone(ErrorMessage = "Phone number is not a valid/supported number.")]
-        [Required(ErrorMessage = "Phone number is required.")]
+
+        [Column("customer_first_name", Order = 4, TypeName = "nvarchar(50)")]
+        public string? FirstName { get; set; }
+
+        [Column("customer_last_name", Order = 5, TypeName = "nvarchar(50)")]
+        public string? LastName { get; set; }
+
+        [Phone]
+        [Required]
+        [Column("customer_phone_number", Order = 2, TypeName = "nvarchar(15)")]
         public string PhoneNumber { get; set; } = string.Empty;
-        public string? EmailAddress { get; set; } = string.Empty;
 
-        public string FullName
-        {
-            get
-            {
-                if (!FirstName.IsNullOrEmpty() && !LastName.IsNullOrEmpty())
-                {
-                    return FirstName + " " + LastName;
-                }
-                else if(!FirstName.IsNullOrEmpty())
-                {
-                    return FirstName;
-                }
-                {
-                    return "";
-                }
-            }
-        }
+        [Column("customer_fullname", Order = 3, TypeName = "nvarchar(101)")]
+        public string FullName { get; set; } = string.Empty;
 
-        public string PhoneAndName
-        {
-            get
-            {
-                if (!FirstName.IsNullOrEmpty() && !LastName.IsNullOrEmpty())
-                {
-                    return PhoneNumber + " (" + FirstName + " " + LastName + ")";
-                }
-                else if (!FirstName.IsNullOrEmpty())
-                {
-                    return PhoneNumber + " (" + FirstName + ")";
-                }
-                else
-                {
-                    return PhoneNumber;
-                }
-            }
-        }
+        // Relational value for Employee
+        public string EmployeeId { get; set; } = string.Empty;
+        public Employee Employee { get; set; } = null!;
+
+        [EmailAddress]
+        [Column("customer_email", Order = 6, TypeName = "nvarchar(101)")]
+        public string? EmailAddress { get; set; }
+
+        [Column("customer_phone_fullname", Order = 7, TypeName = "nvarchar(125)")]
+        public string PhoneAndFullName { get; set; } = string.Empty;
+
     }
 }
