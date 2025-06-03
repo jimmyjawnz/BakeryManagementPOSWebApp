@@ -21,7 +21,7 @@ else
                         <CardSubTitle Class="mb-2 text-black">
                             @String.Format("{0:C2}", item.Price)
                         </CardSubTitle>
-                        <form @onsubmit="() => AddToCart(null)">
+                        <form @onsubmit="() => AddToCart(item)">
                             <div class="input-group">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" id="inputGroupPrepend">Qty</span>
@@ -70,12 +70,12 @@ else
             // Null checks
             if (product is null)
             {
-                throw new Exception("Failed to add product cause product doesn't exist. (Product is null)");
+                throw new Exception("Failed to add product: Product doesn't exist.");
             }
 
             if (CurrentOrder is null)
             {
-                throw new Exception("Can not add a product to no existing order. (CurrentOrder is null)");
+                throw new Exception("Failed to add product: No existing/linked Order.");
             }
 
             // Add product to order, therefor adding to cart
@@ -98,7 +98,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex.Message + "\n" + ex.Source + "\n" + ex.StackTrace);
+            Console.Error.WriteLine(ex.Message + "\n" + ex.StackTrace);
             OnError.InvokeAsync(ex);
         }
     }

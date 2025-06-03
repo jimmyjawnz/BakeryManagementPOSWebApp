@@ -16,6 +16,8 @@
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
+<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight" />
+
 <ConfirmDialog @ref="ConfirmModal" />
 
 <div class="container-fluid" style="min-height: 100vh" id="content">
@@ -38,56 +40,7 @@
                         </TitleTemplate>
                         <Content>
                             <div class="p-1">
-                                @if (products is null)
-                                {
-                                    <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
-                                }
-                                else if (products.Count <= 0)
-                                {
-                                    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available products found." />
-                                }
-                                else
-                                {
-                                    <div class="row row-cols-auto align-items-start overflow-auto" style="max-height: 85vh">
-                                        @foreach (var item in products)
-                                        {
-                                            <div>
-                                                <Card Color="CardColor.Dark" Class="mb-4">
-                                                    <img class="rounded" src="/images/placeholder.jpg" alt="placeholder" width="208" height="208" style="object-fit: cover;" />
-                                                    <CardBody Class="position-absolute bg-light bg-opacity-75 w-100 rounded-bottom" Style="bottom: 0;">
-                                                            <CardTitle Class="text-black">
-                                                                @if (item.Name.Length > 33)
-                                                                {
-                                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.Name">
-                                                                        @item.Name.Substring(0, Math.Min(30, item.Name.Length))...
-                                                                    </Tooltip>
-                                                                }
-                                                                else
-                                                                {
-                                                                    @item.Name
-                                                                }
-                                                            </CardTitle>
-                                                        <CardSubTitle Class="mb-2 text-black">
-                                                            @String.Format("{0:C2}", item.Price)
-                                                        </CardSubTitle>
-                                                        <form @onsubmit="() => AddToCart(item)">
-                                                            <div class="input-group">
-                                                                <div class="input-group-prepend">
-                                                                    <span class="input-group-text" id="inputGroupPrepend">Qty</span>
-                                                                </div>
-                                                                <InputNumber @bind-Value="@Amount" TValue="int" class="form-control" placeholder="Qty"  />
-                                                                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add</Button>
-                                                            </div>
-                                                        </form>
-                                                    </CardBody>
-                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block float-end position-absolute" Style="top: 0; right: 4px; font-size: 1.25em;" Title="<h6><b>Ingredients</b></h6> N/A <h6><b>May Contain</b></h6> N/A" IsHtml=true>
-                                                        <Badge Color="BadgeColor.Info" IndicatorType="BadgeIndicatorType.RoundedPill"><Icon Name="IconName.InfoCircleFill"></Icon></Badge>
-                                                    </Tooltip>
-                                                </Card>
-                                            </div>
-                                        }
-                                    </div>
-                                }
+                                <CardProducts Products="@products" OnCartChanged="UpdatedCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
                             </div>
                         </Content>
                     </Tab>
@@ -329,6 +282,8 @@
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private List<ToastMessage> ToastMessages = new();
 
     private List<Product>? products { get; set; } = new();
     private List<Order>? orders { get; set; } = new();
@@ -612,5 +567,27 @@
         submitButton.HideLoading();
         return;
 
+    }
+
+    private void OnError(Exception? exception)
+    {
+        if (exception is null)
+        {
+            exception = new Exception("An unknown Error has occurred.");
+        }
+
+        ToastMessages.Add(new()
+            {
+                Type = ToastType.Danger,
+                HelpText = exception.Source,
+                IconName = IconName.ExclamationOctagonFill,
+            Content = @<div>
+                        <Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+                        ERROR
+                        <br />
+                        @exception.Message
+                       </div>
+            }
+        );
     }
 }
