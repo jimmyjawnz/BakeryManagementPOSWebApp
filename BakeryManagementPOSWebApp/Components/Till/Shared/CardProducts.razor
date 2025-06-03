@@ -1,0 +1,106 @@
+﻿@if (Products is null)
+{
+    <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else if (Products.Count <= 0)
+{
+    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info" Message="No available products found." />
+}
+else
+{
+    <div class="row row-cols-auto align-items-start overflow-auto" style="max-height: 85vh">
+        @foreach (Product item in Products)
+        {
+            <div>
+                <Card Color="CardColor.Dark" Class="mb-4">
+                    <img class="rounded" src="/images/placeholder.jpg" alt="placeholder" width="208" height="208" style="object-fit: cover;" />
+                    <CardBody Class="position-absolute bg-light bg-opacity-75 w-100 rounded-bottom" Style="bottom: 0;">
+                            <CardTitle Class="text-black">
+                                <ShortenedString ItemName="@item.Name" />
+                            </CardTitle>
+                        <CardSubTitle Class="mb-2 text-black">
+                            @String.Format("{0:C2}", item.Price)
+                        </CardSubTitle>
+                        <form @onsubmit="() => AddToCart(null)">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="inputGroupPrepend">Qty</span>
+                                </div>
+                                <NumberInput @bind-Value="@Amount" TValue="int" placeholder="Qty" Min=1 Max=99 EnableMinMax=true TextAlignment="Alignment.Center" />
+                                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add</Button>
+                            </div>
+                        </form>
+                    </CardBody>
+                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block float-end position-absolute" Style="top: 0; right: 4px; font-size: 1.25em;" Title="<h6><b>Ingredients</b></h6> N/A <h6><b>May Contain</b></h6> N/A" IsHtml=true>
+                        <Badge Color="BadgeColor.Info" IndicatorType="BadgeIndicatorType.RoundedPill"><Icon Name="IconName.InfoCircleFill"></Icon></Badge>
+                    </Tooltip>
+                </Card>
+            </div>
+        }
+    </div>
+}
+                        
+
+@code {
+
+    [Parameter]
+    public Order? CurrentOrder { get; set; }
+
+    [Parameter]
+    public EventCallback OnCartChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnError { get; set; }
+
+    [Parameter]
+    public List<Product>? Products { get; set; }
+
+    private int Amount { get; set; } = 1;
+
+    private string? ProductSearch;
+
+    /// <summary>
+    /// Adds passed product to the current order as an order item.
+    /// </summary>
+    /// <param name="product">Product to add</param>
+    public void AddToCart(Product? product)
+    {
+        try
+        {
+            // Null checks
+            if (product is null)
+            {
+                throw new Exception("Failed to add product cause product doesn't exist. (Product is null)");
+            }
+
+            if (CurrentOrder is null)
+            {
+                throw new Exception("Can not add a product to no existing order. (CurrentOrder is null)");
+            }
+
+            // Add product to order, therefor adding to cart
+            CurrentOrder.OrderItems.Add(
+                new OrderItem()
+                {
+                    Product = product,
+                    ProductId = product.Id,
+                    ProductName = product.Name,
+                    ProductPrice = product.Price,
+                    Quantity = Amount,
+                    RowPrice = product.Price * Amount
+                }
+            );
+
+            // Reset amount and call for cart update
+            Amount = 1;
+
+            OnCartChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.Message + "\n" + ex.Source + "\n" + ex.StackTrace);
+            OnError.InvokeAsync(ex);
+        }
+    }
+
+}

@@ -1,0 +1,24 @@
+﻿@if (ItemName.Length > MaxLength)
+{
+    <Tooltip Color="@TooltipColor" Placement="@TooltipPlacement" Class="d-inline-block" Title="@ItemName">
+        @ItemName.Substring(0, Math.Min(MaxLength - 3, ItemName.Length))...
+    </Tooltip>
+}
+else
+{
+    @ItemName
+}
+
+@code {
+    [Parameter]
+    public required string ItemName { get; set; }
+
+    [Parameter]
+    public int MaxLength { get; set; } = 33;
+
+    [Parameter]
+    public TooltipPlacement TooltipPlacement { get; set; } = TooltipPlacement.Right;
+
+    [Parameter]
+    public TooltipColor TooltipColor { get; set; } = TooltipColor.Light;
+}
