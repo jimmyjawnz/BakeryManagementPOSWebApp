@@ -1,38 +1,54 @@
-﻿namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
 {
     public abstract class Entity
     {
+        [Key]
         public int Id { get; set; }
-        public DateTime DateCreated { get; set; } = DateTime.Now;
-        public DateTime? DateUpdated { get; set; }
-        public DateTime? DateDeleted { get; set; }
 
-        public string DateCreatedStr
+        [Required]
+        public DateTime Created { get; set; } = DateTime.Now;
+
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public DateTime? LastUpdated { get; set; }
+
+        public DateTime? Deleted { get; set; }
+
+        public string DateCreated
         {
             get
             {
-                return DateCreated.ToString();
+                return Created.ToString("g");
             }
         }
-        public string DateUpdatedStr
+        public string DateUpdated
         {
             get
             {
-                if (DateUpdated is null)
+                if (LastUpdated is null)
                 {
                     return "None";
                 }
                 else
                 {
-                    return DateUpdated.ToString()!;
+                    return LastUpdated.Value.ToString("g");
                 }
             }
         }
-        public string DateDeletedStr
+        public string DateDeleted
         {
             get
             {
-                return DateDeleted.ToString()!;
+                if (Deleted is null)
+                {
+                    return "None";
+                }
+                else
+                {
+                    return Deleted.Value.ToString("g");
+                }
             }
         }
     }
