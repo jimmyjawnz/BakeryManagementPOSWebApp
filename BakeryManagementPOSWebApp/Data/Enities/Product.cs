@@ -9,7 +9,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
     public class Product : Entity
     {
         [Required]
-        [Column("product_name", Order = 2, TypeName = "nvarchar(50)")]
+        [Column("product_name", Order = 2, TypeName = "nvarchar(100)")]
         public string Name { get; set; } = string.Empty;
 
         [Required]
@@ -23,6 +23,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         [Column("product_availability", Order = 1, TypeName = "bit")]
         public bool IsAvailable { get; set; } = true;
 
-        public ICollection<OrderItem> OrderItems { get; set; } = [];
+        // Relational value for OrderItems
+        public ICollection<OrderItem> OrderItems { get; } = [];
     }
 }
