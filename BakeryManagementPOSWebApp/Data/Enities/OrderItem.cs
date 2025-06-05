@@ -1,33 +1,28 @@
 ﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
+    [Table("OrderItems")]
     public class OrderItem : Entity
     {
-        [Required(ErrorMessage = "Quantity of product is requried.")]
-        public int Quantity { get; set; } = 1;
-        [Required(ErrorMessage = "Product is required.")]
-        public int ProductId { get; set; }
-        public Product? Product { get; set; }
-        public decimal? ProductPrice { get; set; }
-
-
         [Required]
+        [Column("item_quantity", Order = 2, TypeName = "tinyint")]
+        public int Quantity { get; set; } = 1;
+
+        // Relational value for Product
+        [Required]
+        [Column("item_product_id", Order = 3)]
+        public int ProductId { get; set; }
+        public Product Product { get; set; } = null!;
+
+        [Column("item_row_amount", Order = 4, TypeName = "decimal(8,2)")]
         public decimal RowPrice { get; set; } = 0.00m;
 
         [Required]
-        public string ProductName { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "No Order Relation.")]
+        [Column("item_order_id", Order = 5)]
         public int OrderId { get; set; }
-        public Order? Order { get; set; }
-
-        // Fucntions
-        public decimal CalcRowPrice()
-        {
-            RowPrice = ProductPrice!.Value * Quantity;
-            return RowPrice;
-        }
+        public Order Order { get; set; } = null!;
     }
 }
