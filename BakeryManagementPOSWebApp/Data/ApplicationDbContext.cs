@@ -28,7 +28,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<Customer>()
             .Property(c => c.Created)
             .HasDefaultValueSql("getdate()");
-
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Created)
+            .HasDefaultValueSql("getdate()");
+        modelBuilder.Entity<OrderItem>()
+            .Property(oi=> oi.Created)
+            .HasDefaultValueSql("getdate()");
 
         modelBuilder.Entity<Employee>()
             .Property(e => e.FullName)
