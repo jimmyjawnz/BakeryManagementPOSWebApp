@@ -27,12 +27,13 @@ namespace BakeryManagementPOSWebApp.Services.Orders
             return await _dbContext.Orders
                 .Include(o => o.OrderedBy)
                 .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
                 .Include(o => o.ProcessedBy)
-                .Where(p => p.DateDeleted == null).ToListAsync();
+                .Where(p => p.Deleted == null).ToListAsync();
         }
         public async Task<List<Order>> GetTrashedOrders()
         {
-            return await _dbContext.Orders.Where(p => p.DateDeleted != null).ToListAsync();
+            return await _dbContext.Orders.Where(p => p.Deleted != null).ToListAsync();
         }
 
         public async Task<int?> CreateOrder(Order order)
@@ -46,14 +47,14 @@ namespace BakeryManagementPOSWebApp.Services.Orders
             return await _dbContext.Orders
                 .Include(o => o.OrderedBy)
                 .Include(o => o.ProcessedBy)
-                .Include(o => o.OrderItems!)
+                .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
                 .Where(o => o.Id == id).FirstAsync();
         }
 
         public async Task<int> UpdateOrder(Order order)
         {
-            order.DateUpdated = DateTime.Now;
+            order.LastUpdated = DateTime.Now;
 
             _dbContext.Orders.Update(order);
             return await _dbContext.SaveChangesAsync();
@@ -61,7 +62,7 @@ namespace BakeryManagementPOSWebApp.Services.Orders
 
         public async Task<int> SoftDeleteOrder(Order order)
         {
-            order.DateDeleted = DateTime.Now;
+            order.Deleted = DateTime.Now;
 
             _dbContext.Orders.Update(order);
             return await _dbContext.SaveChangesAsync();
@@ -69,7 +70,7 @@ namespace BakeryManagementPOSWebApp.Services.Orders
 
         public async Task<int> RecoverOrder(Order order)
         {
-            order.DateDeleted = null;
+            order.Deleted = null;
 
             _dbContext.Orders.Update(order);
             return await _dbContext.SaveChangesAsync();
