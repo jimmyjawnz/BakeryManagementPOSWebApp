@@ -3,8 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
-    public class OrderItemDT : Entity
+    public class OrderItemDT
     {
+        public int? ID { get; set; }
+
         [Required(ErrorMessage = "Quantity of product is requried.")]
         public int? Quantity { get; set; }
 

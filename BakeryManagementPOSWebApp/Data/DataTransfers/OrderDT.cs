@@ -7,8 +7,10 @@ using System.Diagnostics.CodeAnalysis;
 namespace BakeryManagementPOSWebApp.Data.Enities
 {
 
-    public class OrderDT : Entity
+    public class OrderDT
     {
+        public int? ID { get; set; }
+
         // Customer who ordered
         public int? CustomerID { get; set; }
         public Customer? OrderedBy { get; set; }
@@ -53,7 +55,10 @@ namespace BakeryManagementPOSWebApp.Data.Enities
                 if(CustomerID is null)
                     return string.Empty;
 
-                return Id.ToString("00000000") + "-" + CustomerID.Value.ToString("0000");
+                if (ID is null)
+                    return string.Empty;
+
+                return ID.Value.ToString("00000000") + "-" + CustomerID.Value.ToString("0000");
             }
         }
 

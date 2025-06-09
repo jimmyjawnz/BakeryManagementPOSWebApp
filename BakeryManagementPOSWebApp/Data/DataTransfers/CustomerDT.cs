@@ -6,6 +6,8 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 {
     public class CustomerDT
     {
+        public int? ID { get; set; }
+
         [Length(1, 25, ErrorMessage = "First name is too large.")]
         public string? FirstName { get; set; } = string.Empty;
         [Length(1, 25, ErrorMessage = "Last name is too large.")]

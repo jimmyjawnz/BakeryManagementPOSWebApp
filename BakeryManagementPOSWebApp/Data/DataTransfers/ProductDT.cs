@@ -5,6 +5,8 @@ namespace BakeryManagementPOSWebApp.Data.DataTransfers
 {
     public class ProductDT
     {
+        public int? ID { get; set; }
+
         [Required(ErrorMessage = "Product name is required.")]
         [StringLength(100, ErrorMessage = "Product name is too long.")]
         public string? Name { get; set; }

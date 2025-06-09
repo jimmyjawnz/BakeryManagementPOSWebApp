@@ -6,6 +6,8 @@ namespace BakeryManagementPOSWebApp.Data.Enities;
 
 public class EmployeeDT
 {
+    public int? ID { get; set; }
+
     [Required(ErrorMessage = "First name is required.")]
     [StringLength(50, ErrorMessage = "First name is too long.")]
     public string? FirstName { get; set; }
