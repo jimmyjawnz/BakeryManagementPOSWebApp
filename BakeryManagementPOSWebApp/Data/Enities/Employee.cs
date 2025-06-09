@@ -24,7 +24,9 @@ public class Employee : IdentityUser
     public string FullName { get; set; } = string.Empty;
 
     // Relational value for Customer
-    public Customer? Customer { get; set; }
+    [Column("employee_customer", Order = 6)]
+    public int CustomerId { get; set; }
+    public Customer Customer { get; set; } = null!;
 
 
     [Required]
