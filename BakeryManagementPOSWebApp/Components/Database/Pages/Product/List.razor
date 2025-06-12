@@ -52,10 +52,10 @@ else
 							}
 						</td>
 						<td class="text-center">
-
-								<Button Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-
+							<AuthorizeView Roles="Manager, Admin">
+								<Button @onclick="() => OnEditModal.InvokeAsync(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
+								<Button @onclick="() => OnRemoveModal.InvokeAsync(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+							</AuthorizeView>
 						</td>
 					</tr>
 				}
@@ -66,9 +66,15 @@ else
 
 
 @code {
+	[Parameter]
+	public EventCallback<Product> OnEditModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Product> OnRemoveModal { get; set; }
+
 	private ApplicationDbContext Context = default!;
 
-	private List<Product>? products { get; set; }
+	private List<Product>? products { get; set; } = null;
 
 	private List<ToastMessage> ToastMessages = new();
 
@@ -105,10 +111,5 @@ else
 	public ValueTask DisposeAsync()
 	{
 		return Context.DisposeAsync();
-	}
-
-	private class ProductDT
-	{
-		
 	}
 }

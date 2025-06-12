@@ -5,12 +5,11 @@
 <title>Products</title>
 <h2>Products</h2>
 
-@implements IAsyncDisposable
-@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 @inject NavigationManager NavigationManager
 @inject ProductService Service
-@rendermode @(new InteractiveServerRenderMode(true))
+
+@rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
 <TrashModal @ref="trashModal"
@@ -143,63 +142,9 @@
 	<Button To="db/products/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
-@if (products is null)
-{
-	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
-}
-else 
-{
-	<table class="table table-striped table-hover">
-		<thead>
-			<tr>
-				<th width="15%">Name</th>
-				<th width="15%">Price</th>
-				<th width="40%">Description</th>
-				<th width="15%">Group</th>
-				<th width="5%" class="text-center">Availability</th>
-				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
-			</tr>
-		</thead>
-		<tbody class="table-group-divider">
-			@if (products.Count == 0)
-			{
-				<tr>
-					<td colspan="6" class="text-center">
-						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing products found in database." />
-					</td>
-				</tr>
-			}
-			@foreach (var item in products)
-			{
-				@if (item.DateDeleted is null)
-				{
-					<tr @ondblclick="(() => ShowInfoModal(item))">
-						<td>@item.Name</td>
-						<td>@String.Format("{0:C2}", item.Price)</td>
-						<td>@item.Description</td>
-						<td></td>
-						<td class="text-center">
-							@if (item.IsAvailable)
-							{
-								<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
-							}
-							else
-							{
-								<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
-							}
-						</td>
-						<td class="text-center">
-							<AuthorizeView Roles="Manager, Admin">
-								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-							</AuthorizeView>
-						</td>
-					</tr>
-				}
-			}
-		</tbody>
-	</table>
-}
+<BakeryManagementPOSWebApp.Components.Database.Pages.Product.List 
+	OnEditModal="(product) => ShowEditModal(product)"
+	OnRemoveModal="(product) => ShowRemoveModal(product)" />
 
 
 @code {
@@ -219,24 +164,6 @@ else
 
 	private Button submitButton { get; set; } = default!;
 
-	protected override async Task OnInitializedAsync()
-	{
-		Context = DbFactory.CreateDbContext();
-		await LoadData();
-	}
-
-	public async Task LoadData()
-	{
-		products = null;
-		await Task.Delay(10);
-		products = await Service.GetExistingProducts();
-	}
-
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
-	}
-
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Data.Enities.Product item)
 	{
@@ -248,7 +175,6 @@ else
 	private async Task SubmitRemoval()
 	{
 		await Service.SoftDeleteProduct(product);
-		await LoadData();
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
@@ -265,7 +191,6 @@ else
 			await Service.UpdateProduct(product);
 		}
 
-		await LoadData();
 		await HideModal();
 		submitButton.HideLoading();
 	}
@@ -296,10 +221,6 @@ else
 		await productModal.ShowAsync();
 	}
 
-	public ValueTask DisposeAsync()
-	{
-		return Context.DisposeAsync();
-	}
 
     private async Task HideModal()
     {
