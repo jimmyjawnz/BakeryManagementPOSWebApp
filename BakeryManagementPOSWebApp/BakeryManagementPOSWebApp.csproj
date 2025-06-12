@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Database\Shared\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 ﻿@page "/db/products"
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Product
 @attribute [Authorize]
 
 <PageTitle>Products</PageTitle>
@@ -16,133 +17,21 @@
 	ObjectName="@product.Name"
 			SubmitMethod="SubmitRemoval" />
 
-<Modal @ref="productModal" Title="@ModalTitle"
-	   UseStaticBackdrop="true"
-	   CloseOnEscape="false"
-	   IsVerticallyCentered="true"
-	   Size="ModalSize.ExtraLarge">
-		<BodyTemplate>
+<ProductModal @ref="productEditModal"
+			ModalType="ModalViewType.Update"
+			SentProduct="product"
+			OnSubmit="() => productList.RefreshData(false)" />
 
-		@if (ModalTitle.Contains("Information"))
-		{
-			<h3>@product.Name</h3>
-
-			<AuthorizeView Roles="Manager, Admin">
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">ID: </label>
-					<div class="col-md-10">
-						<input class="form-control-plaintext" readonly="" value="@product.Id.ToString()" />
-					</div>
-				</div>
-			</AuthorizeView>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Date Created: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.DateCreated" />
-				</div>
-			</div>
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Last Updated: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.DateUpdated" />
-				</div>
-			</div>
-
-			<hr />
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Availability: </label>
-				<div class="col-md-10">
-					@if (product.IsAvailable)
-					{
-						<strong class="text-success form-control-plaintext"><i class="bi bi-check-lg"></i> Yes</strong>
-					}
-					else
-					{
-						<strong class="text-danger form-control-plaintext"><i class="bi bi-x-lg"></i> No</strong>
-					}
-				</div>
-			</div>
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Name: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.Name" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Price: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@String.Format("{0:C2}", @product.Price)" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Description: </label>
-				<div class="col-md-10">
-					<textarea class="form-control-plaintext" rows="3" contenteditable="true" style="resize: none" draggable="false" readonly="" value="@product.Description" />
-				</div>
-			</div>
-			<div class="form-group row">
-				<div class="col-md-12">
-					<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
-				</div>
-			</div>
-		}
-		else 
-		{
-			<EditForm EditContext="editContext" FormName="AddProduct" OnValidSubmit="SubmitForm">
-				<DataAnnotationsValidator />
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Availability: </label>
-					<div class="col-md-10">
-						<Switch @bind-Value="@product.IsAvailable" Class="mt-2" />
-						<ValidationMessage For="() => product.IsAvailable" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Product Name: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@product.Name" Placeholder="Enter product name" />
-						<ValidationMessage For="() => product.Name" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Price: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<CurrencyInput TValue="decimal" @bind-Value="@product.Price" Placeholder="Enter price" />
-						<ValidationMessage For="() => product.Price" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Product Description: </label>
-					<div class="col-md-10">
-						<TextAreaInput @bind-Value="@product.Description" Rows="3" style="resize: none" contenteditable="true" Placeholder="Enter product description" />
-						<ValidationMessage For="() => product.Description" />
-					</div>
-				</div>
-				<div class="form-group row">
-					<div class="col-md-12">
-						<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
-						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">@ModalTitle</Button>
-					</div>
-				</div>
-			</EditForm>
-		}
-	</BodyTemplate>
-</Modal>
+<ProductModal @ref="productCreateModal"
+			  ModalType="ModalViewType.Create"
+			  OnSubmit="() => productList.RefreshData(false)" />
 
 <AuthorizeView Roles="Manager, Admin">
 	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Product</Button>
 	<Button To="db/products/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
-<BakeryManagementPOSWebApp.Components.Database.Pages.Product.List 
+<List @ref="productList"
 	OnEditModal="(product) => ShowEditModal(product)"
 	OnRemoveModal="(product) => ShowRemoveModal(product)" />
 
@@ -150,19 +39,14 @@
 @code {
 	private ApplicationDbContext? Context { get; set; }
 
-
 	private TrashModal trashModal { get; set; } = default!;
 
-	private Modal productModal { get; set; } = default!;
-	private string ModalTitle { get; set; } = string.Empty;
+	private List productList { get; set; } = default!;
 
-	private EditContext editContext { get; set; } = default!;
+	private ProductModal productEditModal { get; set; } = default!;
+	private ProductModal productCreateModal { get; set; } = default!;
+
 	private Data.Enities.Product product { get; set; } = new();
-
-	private List<Data.Enities.Product>? products { get; set; } = new();
-	private Button RefreshButton { get; set; } = default!;
-
-	private Button submitButton { get; set; } = default!;
 
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Data.Enities.Product item)
@@ -178,52 +62,19 @@
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitForm()
-	{
-		submitButton.ShowLoading("Loading...");
-
-		if (ModalTitle.Contains("Add"))
-		{
-			await Service.CreateProduct(product);
-		}
-		else if (ModalTitle.Contains("Edit"))
-		{
-			await Service.UpdateProduct(product);
-		}
-
-		await HideModal();
-		submitButton.HideLoading();
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowAddModal()
 	{
-		product = new();
-		ModalTitle = "Add Product";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
+		await productCreateModal.Show();
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowEditModal(Data.Enities.Product item)
 	{
 		product = item;
-		ModalTitle = "Edit Product - " + product.Name;
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
+		await productEditModal.Show(item);
 	}
 
 	private async Task ShowInfoModal(Data.Enities.Product item)
 	{
-		product = await Service.GetProduct(item.Id);
-		ModalTitle = "Product Information";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
-
-
-    private async Task HideModal()
-    {
-		await productModal.HideAsync();
 	}
 }

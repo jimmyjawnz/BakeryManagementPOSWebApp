@@ -20,7 +20,7 @@ else
 				<th width="40%">Description</th>
 				<th width="15%">Group</th>
 				<th width="5%" class="text-center">Availability</th>
-				<th width="10%" class="text-center"><Button @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
+				<th width="10%" class="text-center"><Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
@@ -89,23 +89,24 @@ else
 		products = await Context.Products.ToListAsync();
 	}
 
-	private async Task RefreshData()
+	public async Task RefreshData(bool showToast)
 	{
 		products = null;
 		await DisposeAsync();
 		Context = await DbFactory.CreateDbContextAsync();
 		await LoadData();
 
-		ToastMessages.Add(new()
-			{
-				Type = ToastType.Info,
-				IconName = IconName.ArrowClockwise,
-				Content =@<div class="text-white">
-						<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
-                        Products Refreshed!
-                       </div>
-			}
-		);
+		if (showToast)
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Info,
+					IconName = IconName.ArrowClockwise,
+					Content =@<div class="text-white">
+							<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
+							Products Refreshed!
+						   </div>
+				}
+			);
 	}
 
 	public ValueTask DisposeAsync()

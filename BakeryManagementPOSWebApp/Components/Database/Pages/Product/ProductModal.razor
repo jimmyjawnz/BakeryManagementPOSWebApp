@@ -1,0 +1,295 @@
+﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+
+@if (ModalType.Equals(ModalViewType.Get))
+{
+	<Modal @ref="modalRef" Title="Product Information"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Update))
+{
+	<Modal @ref="modalRef" Title="@("Edit - " + SentProduct.Name)"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="EditProduct" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Availability: </label>
+					<div class="col-md-10">
+						<Switch @bind-Value="@productDT.Availability" Class="mt-2" />
+						<ValidationMessage For="() => productDT.Availability" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Name: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@productDT.Name" Placeholder="Enter product name" />
+						<ValidationMessage For="() => productDT.Name" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Price: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<CurrencyInput TValue="decimal" @bind-Value="@productDT.Price" Placeholder="Enter price" />
+						<ValidationMessage For="() => productDT.Price" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Description: </label>
+					<div class="col-md-10">
+						<TextAreaInput @bind-Value="@productDT.Description" Rows="3" style="resize: none" contenteditable="true" Placeholder="Enter product description" />
+						<ValidationMessage For="() => productDT.Description" />
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Save Changes</Button>
+					</div>
+				</div>
+
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+else 
+{
+	<Modal @ref="modalRef" Title="New Product"
+			UseStaticBackdrop="true"
+			CloseOnEscape="false"
+			IsVerticallyCentered="true"
+			Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="AddProduct" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Availability: </label>
+					<div class="col-md-10">
+						<Switch @bind-Value="@productDT.Availability" Class="mt-2" />
+						<ValidationMessage For="() => productDT.Availability" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Name: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@productDT.Name" Placeholder="Enter product name" />
+						<ValidationMessage For="() => productDT.Name" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Price: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<CurrencyInput TValue="decimal" @bind-Value="@productDT.Price" Placeholder="Enter price" />
+						<ValidationMessage For="() => productDT.Price" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Product Description: </label>
+					<div class="col-md-10">
+						<TextAreaInput @bind-Value="@productDT.Description" Rows="3" style="resize: none" contenteditable="true" Placeholder="Enter product description" />
+						<ValidationMessage For="() => productDT.Description" />
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Create</Button>
+					</div>
+				</div>
+
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+
+
+@code {
+	[Parameter]
+	public ModalViewType ModalType { get; set; }
+
+	[Parameter]
+	public Product SentProduct { get; set; } = new();
+
+	[Parameter]
+	public EventCallback OnSubmit { get; set; }
+
+	private EditContext editContext { get; set; } = default!;
+	private ProductDT productDT { get; set; } = new();
+
+	public Modal modalRef { get; set; } = default!;
+	private Button submitButton { get; set; } = default!;
+
+	private List<ToastMessage> ToastMessages = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		editContext = new(productDT);
+	}
+
+	public async Task SubmitForm()
+	{
+		using var context = DbFactory.CreateDbContext();
+
+		if (ModalType.Equals(ModalViewType.Update))
+		{
+			submitButton.ShowLoading("Updating...");
+			context.Products.Attach(new Product()
+			{
+				Id = SentProduct.Id,
+				Name = productDT.Name,
+				IsAvailable = productDT.Availability,
+				Price = productDT.Price,
+				Description = productDT.Description
+			}).State = EntityState.Modified;
+		}
+		else
+		{
+			submitButton.ShowLoading("Creating...");
+			context.Products.Add(new Product()
+			{
+				Name = productDT.Name,
+				IsAvailable = productDT.Availability,
+				Price = productDT.Price,
+				Description = productDT.Description
+			});
+		}
+
+		try
+		{
+			await context.SaveChangesAsync();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!ProductExists(SentProduct.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Product is no longer in the database.
+					</div>
+				}
+				);
+				Console.WriteLine("Unable to update as Product is no longer in the database.");
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						@ex.Message
+					</div>
+				}
+				);
+				throw;
+			}
+		}
+		finally
+		{
+			submitButton.HideLoading();
+		}
+
+		if (ModalType.Equals(ModalViewType.Update))
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Success,
+					IconName = IconName.CheckCircle,
+					Content =@<div class="text-white">
+						<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+						Product <strong>@productDT.Name</strong> Updated!
+					</div>
+				}
+			);
+		else
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Success,
+					IconName = IconName.CheckCircle,
+					Content =@<div class="text-white">
+						<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+						Product <strong>@productDT.Name</strong> Created!
+					</div>
+	}
+			);
+
+
+		await OnSubmit.InvokeAsync();
+		await Hide();
+	}
+
+	private bool ProductExists(int id)
+	{
+		using var context = DbFactory.CreateDbContext();
+		return context.Products.Any(e => e.Id == id);
+	}
+
+	public async Task Show(Product product)
+	{
+		productDT = new()
+		{
+			Availability = product.IsAvailable,
+			Name = product.Name,
+			Price = product.Price,
+			Description = product.Description
+		};
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Show()
+	{
+		productDT = new();
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Hide()
+	{
+		await modalRef.HideAsync();
+	}
+
+	public class ProductDT
+	{
+		[StringLength(100, ErrorMessage = "Product name is too long.")]
+		public string Name { get; set; } = string.Empty;
+
+		[Required(ErrorMessage = "Product price is required.")]
+		[DataType(DataType.Currency)]
+		[Range(0.00d, 999.99d, ErrorMessage = "Price needs to be between 0.00 and 1000.00.")]
+		public decimal Price { get; set; }
+
+		public string? Description { get; set; }
+
+		public bool Availability { get; set; } = true;
+	}
+}
