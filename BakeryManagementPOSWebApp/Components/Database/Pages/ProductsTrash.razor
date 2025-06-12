@@ -42,19 +42,19 @@
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Date Created: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.DateCreatedStr" />
+					<input class="form-control-plaintext" readonly="" value="@product.DateCreated" />
 				</div>
 			</div>
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Date Trashed: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.DateDeletedStr" />
+					<input class="form-control-plaintext" readonly="" value="@product.DateDeleted" />
 				</div>
 			</div>
 			<div class="form-group row mb-2">
 				<label class="col-md-2 col-form-label">Last Updated: </label>
 				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@product.DateUpdatedStr" />
+					<input class="form-control-plaintext" readonly="" value="@product.DateUpdated" />
 				</div>
 			</div>
 
@@ -158,9 +158,9 @@ else
 	private string ModalTitle { get; set; } = string.Empty;
 
 	private EditContext editContext { get; set; } = default!;
-	private Product product { get; set; } = new();
+	private Data.Enities.Product product { get; set; } = new();
 
-	private List<Product>? products { get; set; } = new();
+	private List<Data.Enities.Product>? products { get; set; } = new();
 	private Button RefreshButton { get; set; } = default!;
 
 	private Button submitButton { get; set; } = default!;
@@ -183,7 +183,7 @@ else
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Product item)
+	private async Task ShowRemoveModal(Data.Enities.Product item)
 	{
 		product = item;
 		await deleteModal.Show();
@@ -197,7 +197,7 @@ else
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRestoreModal(Product item)
+	private async Task ShowRestoreModal(Data.Enities.Product item)
 	{
 		product = item;
 		await restoreModal.Show();
@@ -210,7 +210,7 @@ else
 		await LoadData();
 	}
 
-	private async Task ShowInfoModal(Product item)
+	private async Task ShowInfoModal(Data.Enities.Product item)
 	{
 		product = await Service.GetProduct(item.Id);
 		ModalTitle = "Product Information";

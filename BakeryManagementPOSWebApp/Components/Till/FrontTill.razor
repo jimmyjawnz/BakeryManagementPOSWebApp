@@ -76,14 +76,14 @@
 		                                <tbody class="table-group-divider">
                                             @foreach (Order item in orders)
                                             {
-                                                @if(!item.IsComplete.Equals(Status.Complete))
+                                                @if(true)
                                                 {
                                                     <tr>
-                                                    <td>@item.OrderIdentifier</td>
+                                                    <td>@item.Id</td>
                                                     <td class="text-center">
-                                                        <OrderStatus status="@item.IsComplete" />
+                                                        <OrderStatus status="Status.PassedPickupDate" />
                                                     </td>
-                                                    <td>@item.OrderedBy!.PhoneAndName</td>
+                                                    <td>@item.OrderedBy.FullName</td>
                                                     <td>@item.Notes</td>
                                                     <td>
                                                         <Button @onclick="() => AddOrderToCart(item)" Color="ButtonColor.Primary" Class="float-end">Select</Button>
@@ -137,15 +137,15 @@
                                                 <Button @onclick="() => ChangeQty(item, -1)" Color="ButtonColor.Secondary" Size="ButtonSize.ExtraSmall" Class="m-0">-</Button>
                                             </td>
                                             <td>
-                                                @if (item.ProductName.Length > 53)
+                                                @if (item.Product.Name.Length > 53)
                                                 {
-                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.ProductName">
-                                                        @item.ProductName.Substring(0, Math.Min(50, item.ProductName.Length))...
+                                                    <Tooltip Color="TooltipColor.Light" Placement="TooltipPlacement.Right" Class="d-inline-block" Title="@item.Product.Name">
+                                                        @item.Product.Name.Substring(0, Math.Min(50, item.Product.Name.Length))...
                                                     </Tooltip>
                                                 }
                                                 else
                                                 {
-                                                    @item.ProductName
+                                                    @item.Product.Name
                                                 }
                                             </td>
                                             <td class="text-end">
@@ -191,7 +191,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-muted">Selected: @CurrentOrder.OrderedBy.PhoneAndName</span>
+                                                    <span class="text-muted">Selected: @CurrentOrder.OrderedBy.FullName</span>
                                                 }
                                             </div>
                                         </div>
@@ -223,7 +223,7 @@
                                             <div class="form-group row mb-2">
                                                 <div class="col-md-5 col-md-12">
                                                     <label>Pickup Date</label>
-                                                    <DateInput @bind-Value="@CurrentOrder.PickupDate" EnableMinMax=true Min="DateTime.Now" />
+                                                    <DateInput @bind-Value="@CurrentOrder.PickedUp" EnableMinMax=true Min="DateTime.Now" />
                                                 </div>
                                             </div>
                                         }
@@ -309,10 +309,8 @@
     {
         CurrentOrder ??= new();
 
-        if (CurrentOrder.CustomerID is not null)
-        {
-            customerPhone = CurrentOrder.OrderedBy!.PhoneAndName;
-        }
+        
+        customerPhone = CurrentOrder.OrderedBy.PhoneAndFullName;
 
         editContext = new(CurrentOrder);
         editContext.OnValidationRequested += HandleValidationRequested;
@@ -364,7 +362,7 @@
 
     private void UpdatedCart()
     {
-        CurrentOrder.CalcTotalAmount();
+        
     }
 
     private void ChangedDiscountPercent(int value)
@@ -399,10 +397,8 @@
             CurrentOrder.OrderItems!.Add(new OrderItem()
             {
                 Product = product,
-                ProductName = product.Name,
                 ProductId = product.Id,
                 Quantity = Amount,
-                ProductPrice = product.Price,
                 RowPrice = product.Price * Amount
             });
 
@@ -435,7 +431,6 @@
                     return;
                 var item = CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated);
                 item!.Quantity += amount;
-                item.CalcRowPrice();
             }
             UpdatedCart();
         }
@@ -510,8 +505,8 @@
             submitButton.ShowLoading("Creating...");
 
             CurrentOrder.EmployeeID = null;
-            CurrentOrder.DateProcessed = null;
-            CurrentOrder.DatePickedUp = null;
+            CurrentOrder.Processed = null;
+            CurrentOrder.PickedUp = null;
 
             result = await OrderService.CreateOrder(CurrentOrder);
 
@@ -537,12 +532,12 @@
         if (confirmation)
         {
             CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User);
-            CurrentOrder.DateProcessed = DateTime.Now;
-            CurrentOrder.DatePickedUp = DateTime.Now;
+            CurrentOrder.Processed = DateTime.Now;
+            CurrentOrder.PickedUp = DateTime.Now;
 
             if (CurrentOrder.PickupDate is null)
             {
-                CurrentOrder.PickupDate = DateTime.Now;
+                CurrentOrder.Pickup = DateTime.Now;
             }
 
             if (isOrder)

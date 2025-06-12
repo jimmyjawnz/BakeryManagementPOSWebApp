@@ -1,0 +1,165 @@
+﻿@attribute [Authorize]
+
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@if (products is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th width="15%">Name</th>
+				<th width="15%">Price</th>
+				<th width="40%">Description</th>
+				<th width="15%">Group</th>
+				<th width="5%" class="text-center">Availability</th>
+				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
+			</tr>
+		</thead>
+		<tbody class="table-group-divider">
+			@if (products.Count == 0)
+			{
+				<tr>
+					<td colspan="6" class="text-center">
+						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing products found in database." />
+					</td>
+				</tr>
+			}
+			@foreach (var item in products)
+			{
+				@if (item.DateDeleted is null)
+				{
+					<tr @ondblclick="(() => ShowInfoModal(item))">
+						<td>@item.Name</td>
+						<td>@String.Format("{0:C2}", item.Price)</td>
+						<td>@item.Description</td>
+						<td></td>
+						<td class="text-center">
+							@if (item.IsAvailable)
+							{
+								<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
+							}
+							else
+							{
+								<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
+							}
+						</td>
+						<td class="text-center">
+							<AuthorizeView Roles="Manager, Admin">
+								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
+								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+							</AuthorizeView>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+}
+
+
+@code {
+	private ApplicationDbContext? Context { get; set; }
+
+
+	private TrashModal trashModal { get; set; } = default!;
+
+	private Modal productModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
+
+	private EditContext editContext { get; set; } = default!;
+	private Product product { get; set; } = new();
+
+	private List<Product>? products { get; set; } = new();
+	private Button RefreshButton { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	protected override async Task OnInitializedAsync()
+	{
+		Context = DbFactory.CreateDbContext();
+		await LoadData();
+	}
+
+	public async Task LoadData()
+	{
+		products = null;
+		await Task.Delay(10);
+	}
+
+	private void RefreshData()
+	{
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRemoveModal(Product item)
+	{
+		product = item;
+		await trashModal.Show();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitRemoval()
+	{
+		await LoadData();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitForm()
+	{
+		submitButton.ShowLoading("Loading...");
+
+		if (ModalTitle.Contains("Add"))
+		{
+			//await Service.CreateProduct(product);
+		}
+		else if (ModalTitle.Contains("Edit"))
+		{
+			//await Service.UpdateProduct(product);
+		}
+
+		await LoadData();
+		await HideModal();
+		submitButton.HideLoading();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowAddModal()
+	{
+		product = new();
+		ModalTitle = "Add Product";
+		editContext = new EditContext(product);
+		await productModal.ShowAsync();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowEditModal(Product item)
+	{
+		product = item;
+		ModalTitle = "Edit Product - " + product.Name;
+		editContext = new EditContext(product);
+		await productModal.ShowAsync();
+	}
+
+	private async Task ShowInfoModal(Product item)
+	{
+		//product = await Service.GetProduct(item.Id);
+		ModalTitle = "Product Information";
+		editContext = new EditContext(product);
+		await productModal.ShowAsync();
+	}
+
+	public ValueTask DisposeAsync()
+	{
+		return Context.DisposeAsync();
+	}
+
+    private async Task HideModal()
+    {
+		await productModal.HideAsync();
+	}
+}
