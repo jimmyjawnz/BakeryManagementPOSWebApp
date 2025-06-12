@@ -20,15 +20,15 @@ namespace BakeryManagementPOSWebApp.Services.Customers
         }
         public async Task<List<Customer>> GetAvailableCustomers()
         {
-            return await _dbContext.Customers.Where(p => p.DateDeleted == null).ToListAsync();
+            return await _dbContext.Customers.Where(p => p.Deleted == null).ToListAsync();
         }
         public async Task<List<Customer>> GetExistingCustomers(string filter)
         {
-            return await _dbContext.Customers.Where(p => p.DateDeleted == null && p.PhoneNumber.Contains(filter)).ToListAsync();
+            return await _dbContext.Customers.Where(p => p.Deleted == null && p.PhoneNumber.Contains(filter)).ToListAsync();
         }
         public async Task<List<Customer>> GetTrashedCustomers()
         {
-            return await _dbContext.Customers.Where(p => p.DateDeleted != null).ToListAsync();
+            return await _dbContext.Customers.Where(p => p.Deleted != null).ToListAsync();
         }
 
         public async Task<Customer> CreateCustomer(Customer customer)
@@ -57,7 +57,7 @@ namespace BakeryManagementPOSWebApp.Services.Customers
 
         public async Task<int> UpdateCustomer(Customer customer)
         {
-            customer.DateUpdated = DateTime.Now;
+            customer.LastUpdated = DateTime.Now;
 
             _dbContext.Customers.Update(customer);
             return await _dbContext.SaveChangesAsync();
@@ -65,7 +65,7 @@ namespace BakeryManagementPOSWebApp.Services.Customers
 
         public async Task<int> SoftDeleteCustomer(Customer customer)
         {
-            customer.DateDeleted = DateTime.Now;
+            customer.Deleted = DateTime.Now;
 
             _dbContext.Customers.Update(customer);
             return await _dbContext.SaveChangesAsync();
@@ -73,7 +73,7 @@ namespace BakeryManagementPOSWebApp.Services.Customers
 
         public async Task<int> RecoverCustomer(Customer customer)
         {
-            customer.DateDeleted = null;
+            customer.Deleted = null;
 
             _dbContext.Customers.Update(customer);
             return await _dbContext.SaveChangesAsync();

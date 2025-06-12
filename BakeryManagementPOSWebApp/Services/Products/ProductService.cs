@@ -20,15 +20,15 @@ namespace BakeryManagementPOSWebApp.Services.Products
         }
         public async Task<List<Product>> GetAvailableProducts()
         {
-            return await _dbContext.Products.Where(p => p.IsAvailable == true && p.DateDeleted == null).ToListAsync();
+            return await _dbContext.Products.Where(p => p.IsAvailable == true && p.Deleted == null).ToListAsync();
         }
         public async Task<List<Product>> GetExistingProducts()
         {
-            return await _dbContext.Products.Where(p => p.DateDeleted == null).ToListAsync();
+            return await _dbContext.Products.Where(p => p.Deleted == null).ToListAsync();
         }
         public async Task<List<Product>> GetTrashedProducts()
         {
-            return await _dbContext.Products.Where(p => p.DateDeleted != null).ToListAsync();
+            return await _dbContext.Products.Where(p => p.Deleted != null).ToListAsync();
         }
 
         public async Task<int> CreateProduct(Product product)
@@ -44,7 +44,7 @@ namespace BakeryManagementPOSWebApp.Services.Products
 
         public async Task<int> UpdateProduct(Product product)
         {
-            product.DateUpdated = DateTime.Now;
+            product.LastUpdated = DateTime.Now;
 
             _dbContext.Products.Update(product);
             return await _dbContext.SaveChangesAsync();
@@ -52,7 +52,7 @@ namespace BakeryManagementPOSWebApp.Services.Products
 
         public async Task<int> SoftDeleteProduct(Product product)
         {
-            product.DateDeleted = DateTime.Now;
+            product.Deleted = DateTime.Now;
 
             _dbContext.Products.Update(product);
             return await _dbContext.SaveChangesAsync();
@@ -60,7 +60,7 @@ namespace BakeryManagementPOSWebApp.Services.Products
 
         public async Task<int> RecoverProduct(Product product)
         {
-            product.DateDeleted = null;
+            product.Deleted = null;
 
             _dbContext.Products.Update(product);
             return await _dbContext.SaveChangesAsync();

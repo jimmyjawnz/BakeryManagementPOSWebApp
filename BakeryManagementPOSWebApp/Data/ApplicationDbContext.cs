@@ -2,6 +2,8 @@ using BakeryManagementPOSWebApp.Data.Enities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Reflection.Metadata;
 
 namespace BakeryManagementPOSWebApp.Data;
 
@@ -16,6 +18,34 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Product>()
+            .Property(p => p.Created)
+            .HasDefaultValueSql("getdate()");
+        modelBuilder.Entity<Employee>()
+            .Property(e => e.Created)
+            .HasDefaultValueSql("getdate()");
+        modelBuilder.Entity<Customer>()
+            .Property(c => c.Created)
+            .HasDefaultValueSql("getdate()");
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Created)
+            .HasDefaultValueSql("getdate()");
+        modelBuilder.Entity<OrderItem>()
+            .Property(oi=> oi.Created)
+            .HasDefaultValueSql("getdate()");
+
+        modelBuilder.Entity<Employee>()
+            .Property(e => e.FullName)
+            .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
+
+        modelBuilder.Entity<Customer>()
+            .Property(c => c.FullName)
+            .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
+
+        modelBuilder.Entity<Customer>()
+            .Property(c => c.PhoneAndFullName)
+            .HasComputedColumnSql("[PhoneNumber] + ' (' + [FirstName] + ' ' + [LastName] + ')'");
 
         modelBuilder.Entity<IdentityRole>().HasData(
             new IdentityRole
@@ -42,8 +72,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Customer
             {
                 Id = 1,
-                DateCreated = DateTime.Parse("0001-01-01"),
-                PhoneNumber = "000 000-0000"
+                FirstName = "ADMIN",
+                LastName = string.Empty,
+                Created = DateTime.Parse("0001-01-01"),
+                PhoneNumber = "0",
+                EmployeeId = "e467e64b-a141-4325-b57b-d267cfd6ccf5"
             }
         );
 
@@ -51,15 +84,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Employee
             {
                 Id = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
+                FirstName = "Admin",
                 EmailConfirmed = true,
                 PasswordHash = "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==",
                 UserName = "ADMIN",
                 NormalizedUserName = "ADMIN",
                 SecurityStamp = "c6f3a8ff-a483-4466-b2c6-32313089d489",
                 ConcurrencyStamp = "98646101-9f66-4aea-ad13-5250b5c1ddde",
-                DateCreated = DateTime.Parse("0001-01-01"),
-                PhoneNumber = "000 000-0000",
-                CustomerId = 1
+                Created = DateTime.Parse("0001-01-01"),
+                PhoneNumber = "0"
             }
         );
 

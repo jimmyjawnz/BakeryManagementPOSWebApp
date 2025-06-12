@@ -1,68 +1,78 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BakeryManagementPOSWebApp.Data.Enities;
 
+[Table("Employees")]
 public class Employee : IdentityUser
 {
-    [Required(ErrorMessage = "First name is required.")]
-    [Length(1, 25, ErrorMessage = "First name is too large.")]
+    [Required]
+    [Column("employee_first_name", Order = 4, TypeName = "nvarchar(50)")]
     public string FirstName { get; set; } = string.Empty;
-    [Length(1, 25, ErrorMessage = "Last name is too large.")]
-    public string LastName { get; set; } = string.Empty;
+
+    [Column("employee_last_name", Order = 5, TypeName = "nvarchar(50)")]
+    public string? LastName { get; set; }
+
     [Phone]
-    [Required(ErrorMessage = "Phone number is required.")]
-    public override string? PhoneNumber { get; set; } = string.Empty;
+    [Required]
+    [Column("employee_phone_number", Order = 2, TypeName = "nvarchar(15)")]
+    public override string? PhoneNumber { get; set; }
 
-    public string FullName
-    {
-        get
-        {
-            if (!FirstName.IsNullOrEmpty())
-            {
-                return FirstName + " " + LastName;
-            }
-            else
-            {
-                return "";
-            }
-        }
-    }
+    [Column("employee_fullname", Order = 3, TypeName = "nvarchar(101)")]
+    public string FullName { get; set; } = string.Empty;
 
+    // Relational value for Customer
+    [Column("employee_customer", Order = 6)]
     public int CustomerId { get; set; }
-    public Customer? Customer { get; set; }
+    public Customer Customer { get; set; } = null!;
 
-    public DateTime DateCreated { get; set; } = DateTime.Now;
-    public DateTime? DateUpdated { get; set; }
-    public DateTime? DateDeleted { get; set; }
 
-    public string DateCreatedStr
+    [Required]
+    [Column("created")]
+    public DateTime Created { get; set; } = DateTime.Now;
+
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    [Column("last_updated")]
+    public DateTime? LastUpdated { get; set; }
+
+    [Column("deleted")]
+    public DateTime? Deleted { get; set; }
+
+    public string DateCreated
     {
         get
         {
-            return DateCreated.ToString();
+            return Created.ToString("g");
         }
     }
-    public string DateUpdatedStr
+    public string DateUpdated
     {
         get
         {
-            if (DateUpdated is null)
+            if (LastUpdated is null)
             {
                 return "None";
             }
             else
             {
-                return DateUpdated.ToString()!;
+                return LastUpdated.Value.ToString("g");
             }
         }
     }
-    public string DateDeletedStr
+    public string DateDeleted
     {
         get
         {
-            return DateDeleted.ToString()!;
+            if (Deleted is null)
+            {
+                return "None";
+            }
+            else
+            {
+                return Deleted.Value.ToString("g");
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BakeryManagementPOSWebApp.Data.Enities.Abstractions;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BakeryManagementPOSWebApp.Data.Enities
@@ -13,149 +14,107 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         NeedsProcessing
     }
 
+    [Table("Orders")]
     public class Order : Entity
     {
         // Customer who ordered
-        public int? CustomerID { get; set; }
-        public Customer? OrderedBy { get; set; }
+        [Required]
+        [Column("order_ordered_by", Order = 2, TypeName = "int")]
+        public int CustomerID { get; set; }
+        public Customer OrderedBy { get; set; } = null!;
 
         // Employee who processed
-        public string? EmployeeID { get; set; }
-        public Employee? ProcessedBy { get; set; }
+        [Required]
+        [Column("order_processed_by", Order = 3, TypeName = "nvarchar(max)")]
+        public string EmployeeID { get; set; } = string.Empty;
+        public Employee ProcessedBy { get; set; } = null!;
 
         // Order items linked to the order
-        public ICollection<OrderItem>? OrderItems { get; set; } = [];
+        public ICollection<OrderItem> OrderItems { get; set; } = [];
 
         // Payment type (Cash, Credit, etc.)
+        [Required]
+        [Column("order_payment_type", Order = 5, TypeName = "nvarchar(25)")]
         public string? PaymentType { get; set; }
 
         // Price sum of order items
+        [Column("order_item_total", Order = 6, TypeName = "decimal(18,2)")]
         public decimal SumOfItems { get; set; } = 0.00m;
 
         // Discount percent and calculated amount
+        [Required]
+        [Column("order_discount_percent", Order = 8, TypeName = "tinyint")]
         public int DiscountPercent { get; set; } = 0;
+        [Required]
+        [Column("order_discount_amount", Order = 7, TypeName = "decimal(18,2)")]
         public decimal DiscountAmount { get; set; } = 0.00m;
 
         // Total order amount
+        [Required]
+        [Column("order_total_amount", Order = 4, TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; } = 0.00m;
 
         // Order notes
+        [Column("order_notes", Order = 11, TypeName = "nvarchar(max)")]
         public string? Notes { get; set; }
 
         // Planned pickup date
-        public DateTime? PickupDate { get; set; }
+        [Column("order_pickup", Order = 10)]
+        public DateTime? Pickup { get; set; }
 
         // Date Pickedup
-        public DateTime? DatePickedUp { get; set; }
+        [Column("order_pickedup", Order = 9)]
+        public DateTime? PickedUp { get; set; }
 
         // Date Processed
-        public DateTime? DateProcessed { get; set; }
+        [Column("order_processed", Order = 8)]
+        public DateTime? Processed { get; set; }
 
-        // Creates a string with "ID-CustomerID"
-        public string OrderIdentifier
-        {
-            get
-            {
-                if(CustomerID is null)
-                    return string.Empty;
-
-                return Id.ToString("00000000") + "-" + CustomerID.Value.ToString("0000");
-            }
-        }
-
-        // Returns true if the order is processed and picked up,
-        // false if not proccessed and picked up, and null otherwise
-        public Status IsComplete
-        {
-            get
-            {
-                if (DateProcessed is not null && DatePickedUp is not null)
-                {
-                    return Status.Complete;
-                }
-                else if (DateProcessed is null && DatePickedUp is null)
-                {
-                    if (PickupDate < DateTime.Now)
-                    {
-                        return Status.PassedPickupDate;
-                    }
-
-                    return Status.WaitingPickup;
-                }
-                else if (DateProcessed is not null && DatePickedUp is null)
-                {
-                    return Status.WaitingPickup;
-                }
-                else if (DateProcessed is null && DatePickedUp is not null)
-                {
-                    return Status.NeedsProcessing;
-                }
-                else
-                {
-                    return Status.Unknown;
-                }
-            }
-        }
 
         // Date strings
-        public string PickupDateStr
+        public string PickupDate
         {
             get
             {
-                if (PickupDate is null)
+                if (Pickup is null)
                 {
                     return "None";
                 }
                 else
                 {
-                    return PickupDate.ToString()!;
+                    return Pickup.ToString()!;
                 }
             }
         }
 
-        public string DateProcessedStr
+        public string PickedUpDate
         {
             get
             {
-                if (DateProcessed is null)
+                if (PickedUp is null)
                 {
                     return "None";
                 }
                 else
                 {
-                    return DateProcessed.ToString()!;
+                    return PickedUp.ToString()!;
                 }
             }
         }
 
-        // Functions
-        public decimal CalcTotalAmount()
+        public string DateProcessed
         {
-            TotalAmount = CalcItemsAmount() - CalcDiscountAmount();
-            return TotalAmount;
-        }
-
-        public decimal CalcDiscountAmount()
-        {
-            DiscountAmount = CalcItemsAmount() * (DiscountPercent / 100.0m);
-            return DiscountAmount;
-        }
-
-        public decimal CalcItemsAmount()
-        {
-            SumOfItems = 0.00m;
-
-            if (OrderItems is null || OrderItems.Count <= 0)
+            get
             {
-                return SumOfItems;
+                if (Processed is null)
+                {
+                    return "None";
+                }
+                else
+                {
+                    return Processed.ToString()!;
+                }
             }
-
-            foreach (var item in OrderItems)
-            {
-                SumOfItems += item.RowPrice;
-            }
-            
-            return SumOfItems;
         }
     }
 }

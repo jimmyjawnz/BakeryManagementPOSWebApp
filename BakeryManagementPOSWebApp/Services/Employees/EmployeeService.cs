@@ -89,7 +89,7 @@ namespace BakeryManagementPOSWebApp.Services.Employees
 
         public async Task<int> UpdateEmployee(Employee employee, string role)
         {
-            employee.DateUpdated = DateTime.Now;
+            employee.LastUpdated = DateTime.Now;
 
             await _userManager.RemoveFromRoleAsync(employee, "Employee");
             await _userManager.RemoveFromRoleAsync(employee, "Manager");
@@ -102,7 +102,7 @@ namespace BakeryManagementPOSWebApp.Services.Employees
 
         public async Task<int> SoftDeleteEmployee(Employee employee)
         {
-            employee.DateDeleted = DateTime.Now;
+            employee.Deleted = DateTime.Now;
 
             _dbContext.Employees.Update(employee);
             return await _dbContext.SaveChangesAsync();
@@ -110,7 +110,7 @@ namespace BakeryManagementPOSWebApp.Services.Employees
 
         public async Task<int> RecoverEmployee(Employee employee)
         {
-            employee.DateDeleted = null;
+            employee.Deleted = null;
 
             _dbContext.Employees.Update(employee);
             return await _dbContext.SaveChangesAsync();
