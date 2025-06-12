@@ -11,6 +11,57 @@
 		   IsVerticallyCentered="true"
 		   Size="ModalSize.ExtraLarge">
 		<BodyTemplate>
+			<h3>
+				@SentProduct.Name
+				@if(SentProduct.IsAvailable)
+				{
+					<Badge Color="BadgeColor.Success" Class="float-end">Available</Badge>
+				}
+				else
+				{
+					<Badge Color="BadgeColor.Secondary" Class="float-end">Not Available</Badge>
+				}
+			</h3>
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Name: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.Name" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Price: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.Price" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Description: </label>
+				<div class="col-md-4">
+					<textarea readonly="" style="resize: none;" class="form-control-plaintext" value="@SentProduct.Description" />
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Created: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.DateCreated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Last Updated: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.DateUpdated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Deleted: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.DateDeleted" />
+				</div>
+			</div>
 
 		</BodyTemplate>
 	</Modal>
@@ -156,13 +207,16 @@ else
 		if (ModalType.Equals(ModalViewType.Update))
 		{
 			submitButton.ShowLoading("Updating...");
-			context.Products.Attach(new Product()
+			context.Products.Update(new Product()
 			{
 				Id = SentProduct.Id,
 				Name = productDT.Name,
 				IsAvailable = productDT.Availability,
 				Price = productDT.Price,
-				Description = productDT.Description
+				Description = productDT.Description,
+				LastUpdated = DateTime.Now,
+				Created = SentProduct.Created,
+				Deleted = SentProduct.Deleted
 			}).State = EntityState.Modified;
 		}
 		else
@@ -197,7 +251,7 @@ else
 					</div>
 				}
 				);
-				Console.WriteLine("Unable to update as Product is no longer in the database.");
+				Console.WriteLine("ERROR -> Unable to Update: " + SentProduct.Id + " Product is no longer in the database.");
 			}
 			else
 			{

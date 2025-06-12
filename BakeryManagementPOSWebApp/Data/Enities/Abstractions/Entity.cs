@@ -13,7 +13,6 @@ namespace BakeryManagementPOSWebApp.Data.Enities.Abstractions
         [Column("created")]
         public DateTime Created { get; set; } = DateTime.Now;
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         [Column("last_updated")]
         public DateTime? LastUpdated { get; set; }
 

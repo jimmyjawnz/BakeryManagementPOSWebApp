@@ -17,6 +17,10 @@
 	ObjectName="@product.Name"
 			SubmitMethod="SubmitRemoval" />
 
+<ProductModal @ref="productInfoModal"
+			  ModalType="ModalViewType.Get"
+			  SentProduct="product" />
+
 <ProductModal @ref="productEditModal"
 			ModalType="ModalViewType.Update"
 			SentProduct="product"
@@ -33,7 +37,8 @@
 
 <List @ref="productList"
 	OnEditModal="(product) => ShowEditModal(product)"
-	OnRemoveModal="(product) => ShowRemoveModal(product)" />
+	OnRemoveModal="(product) => ShowRemoveModal(product)"
+	OnInfoModal="(product) => ShowInfoModal(product)"/>
 
 
 @code {
@@ -43,6 +48,7 @@
 
 	private List productList { get; set; } = default!;
 
+	private ProductModal productInfoModal { get; set; } = default!;
 	private ProductModal productEditModal { get; set; } = default!;
 	private ProductModal productCreateModal { get; set; } = default!;
 
@@ -76,5 +82,7 @@
 
 	private async Task ShowInfoModal(Data.Enities.Product item)
 	{
+		product = item;
+		await productInfoModal.Show(item);
 	}
 }

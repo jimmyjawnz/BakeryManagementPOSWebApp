@@ -36,7 +36,7 @@ else
 			{
 				@if (item.Deleted is null)
 				{
-					<tr>
+					<tr @ondblclick="() => OnInfoModal.InvokeAsync(item)">
 						<td>@item.Name</td>
 						<td>@String.Format("{0:C2}", item.Price)</td>
 						<td>@item.Description</td>
@@ -72,6 +72,9 @@ else
 	[Parameter]
 	public EventCallback<Product> OnRemoveModal { get; set; }
 
+	[Parameter]
+	public EventCallback<Product> OnInfoModal { get; set; }
+
 	private ApplicationDbContext Context = default!;
 
 	private List<Product>? products { get; set; } = null;
@@ -86,7 +89,7 @@ else
 
 	private async Task LoadData()
 	{
-		products = await Context.Products.ToListAsync();
+		products = await Context.Products.OrderBy(p => p.Name).ToListAsync();
 	}
 
 	public async Task RefreshData(bool showToast)
