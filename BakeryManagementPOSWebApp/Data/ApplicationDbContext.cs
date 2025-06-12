@@ -37,15 +37,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<Employee>()
             .Property(e => e.FullName)
-            .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
+            .HasComputedColumnSql("[employee_first_name] + ' ' + [employee_last_name]");
 
         modelBuilder.Entity<Customer>()
             .Property(c => c.FullName)
-            .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
+            .HasComputedColumnSql("[customer_first_name] + ' ' + [customer_last_name]");
 
         modelBuilder.Entity<Customer>()
             .Property(c => c.PhoneAndFullName)
-            .HasComputedColumnSql("[PhoneNumber] + ' (' + [FirstName] + ' ' + [LastName] + ')'");
+            .HasComputedColumnSql("[customer_phone_number] + ' (' + [customer_first_name] + ' ' + [customer_last_name] + ')'");
 
         modelBuilder.Entity<IdentityRole>().HasData(
             new IdentityRole

@@ -1,7 +1,10 @@
-﻿@attribute [Authorize]
-
-@implements IAsyncDisposable
+﻿@implements IAsyncDisposable
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
 
 @if (products is null)
 {
@@ -17,7 +20,7 @@ else
 				<th width="40%">Description</th>
 				<th width="15%">Group</th>
 				<th width="5%" class="text-center">Availability</th>
-				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
+				<th width="10%" class="text-center"><Button @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
@@ -31,9 +34,9 @@ else
 			}
 			@foreach (var item in products)
 			{
-				@if (item.DateDeleted is null)
+				@if (item.Deleted is null)
 				{
-					<tr @ondblclick="(() => ShowInfoModal(item))">
+					<tr>
 						<td>@item.Name</td>
 						<td>@String.Format("{0:C2}", item.Price)</td>
 						<td>@item.Description</td>
@@ -49,10 +52,10 @@ else
 							}
 						</td>
 						<td class="text-center">
-							<AuthorizeView Roles="Manager, Admin">
-								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-							</AuthorizeView>
+
+								<Button Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
+								<Button Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
+
 						</td>
 					</tr>
 				}
@@ -63,94 +66,40 @@ else
 
 
 @code {
-	private ApplicationDbContext? Context { get; set; }
+	private ApplicationDbContext Context = default!;
 
+	private List<Product>? products { get; set; }
 
-	private TrashModal trashModal { get; set; } = default!;
-
-	private Modal productModal { get; set; } = default!;
-	private string ModalTitle { get; set; } = string.Empty;
-
-	private EditContext editContext { get; set; } = default!;
-	private Product product { get; set; } = new();
-
-	private List<Product>? products { get; set; } = new();
-	private Button RefreshButton { get; set; } = default!;
-
-	private Button submitButton { get; set; } = default!;
+	private List<ToastMessage> ToastMessages = new();
 
 	protected override async Task OnInitializedAsync()
 	{
-		Context = DbFactory.CreateDbContext();
+		Context = await DbFactory.CreateDbContextAsync();
 		await LoadData();
 	}
 
-	public async Task LoadData()
+	private async Task LoadData()
+	{
+		products = await Context.Products.ToListAsync();
+	}
+
+	private async Task RefreshData()
 	{
 		products = null;
-		await Task.Delay(10);
-	}
-
-	private void RefreshData()
-	{
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Product item)
-	{
-		product = item;
-		await trashModal.Show();
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitRemoval()
-	{
+		await DisposeAsync();
+		Context = await DbFactory.CreateDbContextAsync();
 		await LoadData();
-	}
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitForm()
-	{
-		submitButton.ShowLoading("Loading...");
-
-		if (ModalTitle.Contains("Add"))
-		{
-			//await Service.CreateProduct(product);
-		}
-		else if (ModalTitle.Contains("Edit"))
-		{
-			//await Service.UpdateProduct(product);
-		}
-
-		await LoadData();
-		await HideModal();
-		submitButton.HideLoading();
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowAddModal()
-	{
-		product = new();
-		ModalTitle = "Add Product";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowEditModal(Product item)
-	{
-		product = item;
-		ModalTitle = "Edit Product - " + product.Name;
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
-
-	private async Task ShowInfoModal(Product item)
-	{
-		//product = await Service.GetProduct(item.Id);
-		ModalTitle = "Product Information";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
+		ToastMessages.Add(new()
+			{
+				Type = ToastType.Info,
+				IconName = IconName.ArrowClockwise,
+				Content =@<div class="text-white">
+						<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
+                        Products Refreshed!
+                       </div>
+			}
+		);
 	}
 
 	public ValueTask DisposeAsync()
@@ -158,8 +107,8 @@ else
 		return Context.DisposeAsync();
 	}
 
-    private async Task HideModal()
-    {
-		await productModal.HideAsync();
+	private class ProductDT
+	{
+		
 	}
 }
