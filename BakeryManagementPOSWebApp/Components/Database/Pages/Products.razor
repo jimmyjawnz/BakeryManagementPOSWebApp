@@ -1,10 +1,12 @@
 ﻿@page "/db/products"
-
 @attribute [Authorize]
 
 <PageTitle>Products</PageTitle>
 <title>Products</title>
 <h2>Products</h2>
+
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 @inject NavigationManager NavigationManager
 @inject ProductService Service
@@ -201,6 +203,9 @@ else
 
 
 @code {
+	private ApplicationDbContext? Context { get; set; }
+
+
 	private TrashModal trashModal { get; set; } = default!;
 
 	private Modal productModal { get; set; } = default!;
@@ -216,82 +221,88 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
+		Context = DbFactory.CreateDbContext();
 		await LoadData();
-	}
+    }
 
-	public async Task LoadData()
-	{
-		products = null;
-		await Task.Delay(10);
-		products = await Service.GetExistingProducts();
-	}
+    public async Task LoadData()
+    {
+        products = null;
+        await Task.Delay(10);
+        products = await Service.GetExistingProducts();
+    }
 
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
-	}
+    private void RefreshData()
+    {
+        NavigationManager.Refresh(true);
+    }
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Product item)
-	{
-		product = item;
-		await trashModal.Show();
-	}
+    [Authorize(Roles = "Manager,Admin")]
+    private async Task ShowRemoveModal(Product item)
+    {
+        product = item;
+        await trashModal.Show();
+    }
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitRemoval()
-	{
-		await Service.SoftDeleteProduct(product);
-		await LoadData();
-	}
+    [Authorize(Roles = "Manager,Admin")]
+    private async Task SubmitRemoval()
+    {
+        await Service.SoftDeleteProduct(product);
+        await LoadData();
+    }
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitForm()
-	{
-		submitButton.ShowLoading("Loading...");
+    [Authorize(Roles = "Manager,Admin")]
+    private async Task SubmitForm()
+    {
+        submitButton.ShowLoading("Loading...");
 
-		if (ModalTitle.Contains("Add"))
-		{
-			await Service.CreateProduct(product);
-		}
-		else if (ModalTitle.Contains("Edit"))
-		{
-			await Service.UpdateProduct(product);
-		}
+        if (ModalTitle.Contains("Add"))
+        {
+            await Service.CreateProduct(product);
+        }
+        else if (ModalTitle.Contains("Edit"))
+        {
+            await Service.UpdateProduct(product);
+        }
 
-		await LoadData();
-		await HideModal();
-		submitButton.HideLoading();
-	}
+        await LoadData();
+        await HideModal();
+        submitButton.HideLoading();
+    }
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowAddModal()
-	{
-		product = new();
-		ModalTitle = "Add Product";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
+    [Authorize(Roles = "Manager,Admin")]
+    private async Task ShowAddModal()
+    {
+        product = new();
+        ModalTitle = "Add Product";
+        editContext = new EditContext(product);
+        await productModal.ShowAsync();
+    }
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowEditModal(Product item)
-	{
-		product = item;
-		ModalTitle = "Edit Product - " + product.Name;
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
+    [Authorize(Roles = "Manager,Admin")]
+    private async Task ShowEditModal(Product item)
+    {
+        product = item;
+        ModalTitle = "Edit Product - " + product.Name;
+        editContext = new EditContext(product);
+        await productModal.ShowAsync();
+    }
 
-	private async Task ShowInfoModal(Product item)
-	{
-		product = await Service.GetProduct(item.Id);
-		ModalTitle = "Product Information";
-		editContext = new EditContext(product);
-		await productModal.ShowAsync();
-	}
+    private async Task ShowInfoModal(Product item)
+    {
+        product = await Service.GetProduct(item.Id);
+        ModalTitle = "Product Information";
+        editContext = new EditContext(product);
+        await productModal.ShowAsync();
+    }
 
-	private async Task HideModal()
-	{
+    public ValueTask DisposeAsync()
+    {
+        Context
+    }
+
+    private async Task HideModal()
+    {
 		await productModal.HideAsync();
 	}
 }

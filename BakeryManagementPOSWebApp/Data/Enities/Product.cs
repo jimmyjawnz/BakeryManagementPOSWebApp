@@ -13,7 +13,8 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public string Name { get; set; } = string.Empty;
 
         [Required]
-        [Column("product_price", Order = 3, TypeName = "decimal(8,2)")]
+        [DataType(DataType.Currency)]
+        [Column("product_price", Order = 3, TypeName = "decimal(18,2)")]
         public decimal Price { get; set; } = 0.00m;
 
         [Column("product_description", Order = 4, TypeName = "nvarchar(max)")]
