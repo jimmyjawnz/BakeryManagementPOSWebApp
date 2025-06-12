@@ -84,6 +84,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             {
                 Id = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
                 FirstName = "Admin",
+                LastName = "",
                 EmailConfirmed = true,
                 PasswordHash = "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==",
                 UserName = "ADMIN",
@@ -91,7 +92,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 SecurityStamp = "c6f3a8ff-a483-4466-b2c6-32313089d489",
                 ConcurrencyStamp = "98646101-9f66-4aea-ad13-5250b5c1ddde",
                 Created = DateTime.Parse("0001-01-01"),
-                PhoneNumber = "0",
+                PhoneNumber = "0000000000",
                 CustomerId = 1
             }
         );

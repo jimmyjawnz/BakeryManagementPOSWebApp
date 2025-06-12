@@ -5,7 +5,9 @@
 @using Microsoft.AspNetCore.Identity
 @using BakeryManagementPOSWebApp.Data
 
-@inject EmployeeService EmployeeService
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
 @inject SignInManager<Employee> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
@@ -41,6 +43,8 @@
 </div>
 
 @code {
+    private ApplicationDbContext Context = default!;
+
     private string? errorMessage;
 
     [CascadingParameter]
@@ -58,18 +62,21 @@
         {
             errorMessage = "You need to login to access this page.";
         }
+
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
+
+        Context = await DbFactory.CreateDbContextAsync();
     }
 
     public async Task LoginUser()
     {
-        var employee = await EmployeeService.GetEmployeeByUserName(Input.FullName.Replace(" ", ""));
+        var employee = Context.Employees.Where(p => p.FullName == Input.FullName.ToLower().Replace(" ", "")).FirstOrDefaultAsync();
 
-        if(employee.DateDeleted is not null)
+        if (employee.Result is null || employee.Result.Deleted is not null)
         {
             errorMessage = "Error: Invalid login attempt.";
             return;
@@ -99,6 +106,11 @@
         {
             errorMessage = "Error: Invalid login attempt.";
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return Context.DisposeAsync();
     }
 
     private sealed class InputModel
