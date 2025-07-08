@@ -59,7 +59,7 @@
                                 }
                                 else if (orders.Count <= 0)
                                 {
-                                    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available products found." />
+                                    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available orders found." />
                                 }
                                 else
                                 {
@@ -308,9 +308,11 @@
     protected override async Task OnInitializedAsync()
     {
         CurrentOrder ??= new();
-
         
-        customerPhone = CurrentOrder.OrderedBy.PhoneAndFullName;
+        if (CurrentOrder.OrderedBy is not null)
+        {
+            customerPhone = CurrentOrder.OrderedBy.PhoneAndFullName;
+        }
 
         editContext = new(CurrentOrder);
         editContext.OnValidationRequested += HandleValidationRequested;
