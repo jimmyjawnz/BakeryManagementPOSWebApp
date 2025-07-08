@@ -6,9 +6,8 @@
 <title>Products</title>
 <h2>Products</h2>
 
-
 @inject NavigationManager NavigationManager
-@inject ProductService Service
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
@@ -18,12 +17,10 @@
 			SubmitMethod="SubmitRemoval" />
 
 <ProductModal @ref="productInfoModal"
-			  ModalType="ModalViewType.Get"
-			  SentProduct="product" />
+			  ModalType="ModalViewType.Get"/>
 
 <ProductModal @ref="productEditModal"
 			ModalType="ModalViewType.Update"
-			SentProduct="product"
 			OnSubmit="() => productList.RefreshData(false)" />
 
 <ProductModal @ref="productCreateModal"
@@ -31,14 +28,14 @@
 			  OnSubmit="() => productList.RefreshData(false)" />
 
 <AuthorizeView Roles="Manager, Admin">
-	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Product</Button>
+	<Button @onclick="productCreateModal.Show" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Product</Button>
 	<Button To="db/products/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
 <List @ref="productList"
-	OnEditModal="(product) => ShowEditModal(product)"
-	OnRemoveModal="(product) => ShowRemoveModal(product)"
-	OnInfoModal="(product) => ShowInfoModal(product)"/>
+	OnEditModal="(product) => productEditModal.Show(product)"
+	  OnRemoveModal="(product) => ShowRemoveModal(product)"
+	  OnInfoModal="(product) => productInfoModal.Show(product)" />
 
 
 @code {
@@ -64,25 +61,24 @@
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
-		await Service.SoftDeleteProduct(product);
-	}
+		Context = DbFactory.CreateDbContext();
+		product.Deleted = DateTime.Now;
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowAddModal()
-	{
-		await productCreateModal.Show();
+		Context.Products.Update(product);
+		await Context.SaveChangesAsync();
+		Context.Dispose();
+
+		await productList.RefreshData(false);
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowEditModal(Data.Enities.Product item)
 	{
-		product = item;
 		await productEditModal.Show(item);
 	}
 
 	private async Task ShowInfoModal(Data.Enities.Product item)
 	{
-		product = item;
 		await productInfoModal.Show(item);
 	}
 }

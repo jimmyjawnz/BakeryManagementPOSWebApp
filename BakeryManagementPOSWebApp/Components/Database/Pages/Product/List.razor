@@ -1,5 +1,5 @@
-﻿@implements IAsyncDisposable
-@inject IDbContextFactory<ApplicationDbContext> DbFactory
+﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ProductService ProductService
 
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
@@ -12,58 +12,67 @@
 }
 else 
 {
-	<table class="table table-striped table-hover">
-		<thead>
-			<tr>
-				<th width="15%">Name</th>
-				<th width="15%">Price</th>
-				<th width="40%">Description</th>
-				<th width="15%">Group</th>
-				<th width="5%" class="text-center">Availability</th>
-				<th width="10%" class="text-center"><Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
-			</tr>
-		</thead>
-		<tbody class="table-group-divider">
-			@if (products.Count == 0)
-			{
-				<tr>
-					<td colspan="6" class="text-center">
-						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing products found in database." />
-					</td>
-				</tr>
-			}
-			@foreach (var item in products)
-			{
-				@if (item.Deleted is null)
-				{
-					<tr @ondblclick="() => OnInfoModal.InvokeAsync(item)">
-						<td>@item.Name</td>
-						<td>@String.Format("{0:C2}", item.Price)</td>
-						<td>@item.Description</td>
-						<td></td>
-						<td class="text-center">
-							@if (item.IsAvailable)
-							{
-								<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
-							}
-							else
-							{
-								<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
-							}
-						</td>
-						<td class="text-center">
-							<AuthorizeView Roles="Manager, Admin">
-								<Button @onclick="() => OnEditModal.InvokeAsync(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button @onclick="() => OnRemoveModal.InvokeAsync(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-							</AuthorizeView>
-						</td>
-					</tr>
-				}
-			}
-		</tbody>
-	</table>
-}
+	<Grid TItem="Product"
+		  Class="table table-hover table-striped table-sm"
+		  DataProvider="ProductsDataProvider"
+		  AllowFiltering="true"
+		  Responsive="true"
+		  AllowRowClick="true"
+		  OnRowDoubleClick="(args) => OnInfoModal.InvokeAsync(args.Item)"
+		  FiltersRowCssClass="bg-secondary bg-opacity-25 border-bottom-0"
+		  HeaderRowCssClass="">
 
+		<GridColumns>
+			<GridColumn TItem="Product" HeaderText="Name" PropertyName="Name" FilterTextboxWidth="100">
+				<Button Class="border-0" @onclick="() => OnInfoModal.InvokeAsync(context)" Outline=true Size=ButtonSize.Small Color="ButtonColor.Primary" TooltipTitle="Info"><i class="bi bi-info-circle-fill"></i></Button>
+				@context.Name
+			</GridColumn>
+			<GridColumn TItem="Product" HeaderText="Price" PropertyName="Price" FilterOperator="FilterOperator.GreaterThanOrEquals" FilterTextboxWidth="100">
+				@context.Price.ToString("C2")
+			</GridColumn>
+			<GridColumn TItem="Product" HeaderText="Description" PropertyName="Description" Filterable="false">
+				@context.Description
+			</GridColumn>
+			<GridColumn TItem="Product" HeaderText="Available" PropertyName="IsAvailable" Class="text-center">
+				@if (context.IsAvailable)
+				{
+					<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
+				}
+				else
+				{
+					<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
+				}
+			</GridColumn>
+			<GridColumn TItem="Product" HeaderText="" Filterable=false Class="text-center">
+				<HeaderContent>
+					<Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">
+						<Icon Name="IconName.ArrowClockwise" class="me-1"></Icon>
+						Refresh
+					</Button>
+				</HeaderContent>
+				<ChildContent>
+					@if(ShowTrashed)
+					{
+						<AuthorizeView Roles="Manager, Admin" Context="auth">
+							<Button @onclick="() => OnRestoreModal.InvokeAsync(context)" Color="ButtonColor.Success" TooltipTitle="Restore"><i class="bi bi-arrow-counterclockwise"></i></Button>
+						</AuthorizeView>
+						<AuthorizeView Roles="Admin" Context="auth">
+							<Button @onclick="() => OnDeleteModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Delete"><i class="bi bi-file-earmark-x"></i></Button>
+						</AuthorizeView>
+					}
+					else
+					{
+						<AuthorizeView Roles="Manager, Admin" Context="auth">
+							<Button @onclick="() => OnEditModal.InvokeAsync(context)" Color="ButtonColor.Info" TooltipTitle="Edit"><i class="bi bi-pencil-square"></i></Button>
+							<Button @onclick="() => OnRemoveModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Trash"><i class="bi bi-trash"></i></Button>
+						</AuthorizeView>
+					}
+				</ChildContent>
+			</GridColumn>
+		</GridColumns>
+
+	</Grid>
+}
 
 @code {
 	[Parameter]
@@ -75,28 +84,51 @@ else
 	[Parameter]
 	public EventCallback<Product> OnInfoModal { get; set; }
 
+	[Parameter]
+	public EventCallback<Product> OnDeleteModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Product> OnRestoreModal { get; set; }
+
+	[Parameter]
+	public bool ShowTrashed { get; set; } = false;
+
 	private ApplicationDbContext Context = default!;
 
 	private List<Product>? products { get; set; } = null;
 
 	private List<ToastMessage> ToastMessages = new();
 
+	private async Task<GridDataProviderResult<Product>> ProductsDataProvider(GridDataProviderRequest<Product> request)
+	{
+		if (products is null)
+			await LoadData();
+
+		return await Task.FromResult(request.ApplyTo(products!));
+	}
+
 	protected override async Task OnInitializedAsync()
 	{
-		Context = await DbFactory.CreateDbContextAsync();
 		await LoadData();
 	}
 
 	private async Task LoadData()
 	{
-		products = await Context.Products.OrderBy(p => p.Name).ToListAsync();
+		Context = DbFactory.CreateDbContext();
+		if (ShowTrashed)
+		{
+			products = await Context.Products.Where(p => p.Deleted != null).ToListAsync();
+		}
+		else
+		{
+			products = await Context.Products.Where(p => p.Deleted == null).ToListAsync();
+		}
+		Context.Dispose();
 	}
 
 	public async Task RefreshData(bool showToast)
 	{
 		products = null;
-		await DisposeAsync();
-		Context = await DbFactory.CreateDbContextAsync();
 		await LoadData();
 
 		if (showToast)
@@ -110,10 +142,5 @@ else
 						   </div>
 				}
 			);
-	}
-
-	public ValueTask DisposeAsync()
-	{
-		return Context.DisposeAsync();
 	}
 }

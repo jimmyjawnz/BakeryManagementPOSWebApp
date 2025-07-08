@@ -311,6 +311,8 @@ else
 
 	public async Task Show(Product product)
 	{
+		SentProduct = product;
+
 		productDT = new()
 		{
 			Availability = product.IsAvailable,
