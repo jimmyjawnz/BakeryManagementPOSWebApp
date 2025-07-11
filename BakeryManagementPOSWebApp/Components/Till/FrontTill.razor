@@ -8,7 +8,6 @@
 
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-@inject CustomerService CustomerService
 @inject EmployeeService EmployeeService
 @inject UserManager<Employee> UserManager
 @inject OrderService OrderService
@@ -46,7 +45,7 @@
                                     <TextInput @bind-Value="@productSearch" @oninput="OnProductSearchChanged" Placeholder="Search a product..." />
                                 </div>
                                 <div class="mt-2">
-                                    <CardProducts Products="@viewProducts" OnCartChanged="UpdatedCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
+                                    <CardProducts Products="@viewProducts" OnCartChanged="UpdateCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
                                 </div>
                             </div>
                         </Content>
@@ -118,7 +117,7 @@
                 @* Cart *@
                 <div class="col-md-6 bg-light p-0" >
                     <div style="height:94vh; overflow-y:scroll">
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped">
                             <thead class="position-sticky top-0 table-primary" >
                                 <tr>
                                     <th width="15%" class="text-center">Qty</th>
@@ -193,9 +192,9 @@
                                                 <AutoComplete @bind-Value="@customerPhone"
                                                               TItem="Customer"
                                                               DataProvider="CustomersDataProvider"
-                                                              PropertyName="PhoneAndName"
+                                                              PropertyName="PhoneAndFullName"
                                                               Placeholder="Search a phone number..."
-                                                              OnChanged="(Customer customer) => OnAutoCompleteChanged(customer)" />
+                                                              OnChanged="(Customer customer) => OnCustomerSearchChanged(customer)" />
                                                 <ValidationMessage For="() => CurrentOrder.CustomerID" />
                                                 @if (CurrentOrder.OrderedBy is null)
                                                 {
@@ -227,7 +226,7 @@
                                         <div class="form-group row mb-2">
                                             <div class="col-md-5 col-md-12">
                                                 <label>Discount Amount (%)</label>
-                                                <NumberInput Value="CurrentOrder.DiscountPercent" TValue="int" ValueExpression="() => CurrentOrder.DiscountPercent" ValueChanged="(value) => ChangedDiscountPercent(value)" EnableMinMax="true" Min="0" Max="100" />
+                                                <NumberInput Value="CurrentOrder.DiscountPercent" TValue="int" ValueExpression="() => CurrentOrder.DiscountPercent" ValueChanged="(value) => CurrentOrder.DiscountPercent = value" EnableMinMax="true" Min="0" Max="100" />
                                             </div>
                                         </div>
                                         @if (EmptyOrder)
@@ -301,6 +300,7 @@
 
     private ICollection<Product> loadedProducts = [];
     private ICollection<Order> loadedOrders = [];
+    private ICollection<Customer> loadedCustomers = [];
 
     private List<Product>? viewProducts { get; set; } = new();
     private List<Order>? viewOrders { get; set; } = new();
@@ -337,6 +337,11 @@
         editContext.OnValidationRequested += HandleValidationRequested;
         messageStore = new(editContext);
 
+        if (CurrentOrder.ProcessedBy is null)
+        {
+            CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User)!;
+        }
+
         LoadData();
     }
     private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
@@ -360,13 +365,13 @@
         Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("[i] -- Loading Till Data...");
 
-        // Reset viewed Products
-        viewProducts = null;
-
         // Create a DbContext
         Context = DbFactory.CreateDbContext();
 
         Console.WriteLine("[i] -- Context Created");
+
+        // Reset viewed Products
+        viewProducts = null;
 
         // Load Products for this session
         loadedProducts = Context.Products.Where(p => p.Deleted == null).OrderBy(p => p.Name).ToList();
@@ -387,6 +392,12 @@
 
         Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("[i] -- Orders Loaded");
+
+        // Load Customers for this session
+        loadedCustomers = Context.Customers.Where(c => c.Deleted == null).ToList();
+
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[i] -- Customers Loaded");
 
         // Dispose Context
         Context.Dispose();
@@ -416,33 +427,35 @@
         }
     }
 
-    private void UpdatedCart()
-    {
-
-    }
-
     private void ChangedDiscountPercent(int value)
     {
         CurrentOrder.DiscountPercent = value;
-        UpdatedCart();
+    }
+
+    public void UpdateCart()
+    {
+        
     }
 
     public async Task ClearCart()
     {
+        // If Cart is empty return
         if (CurrentOrder.OrderItems!.Count <= 0)
         {
             return;
         }
+
+        // Ask for the user to confirm clear
         var confirmation = await ConfirmModal.ShowAsync(
             title: "Are you sure you want to clear the cart?",
             message1: "This will remove all products/orders in the cart.",
             message2: "Do you want to proceed?"
         );
 
+        // Clear Cart if confrimed
         if (confirmation)
         {
             CurrentOrder.OrderItems!.Clear();
-            UpdatedCart();
         }
     }
 
@@ -459,7 +472,6 @@
             });
 
             Amount = 1;
-            UpdatedCart();
         }
     }
 
@@ -468,7 +480,6 @@
         if (orderItem is not null)
         {
             CurrentOrder.OrderItems!.Remove(orderItem);
-            UpdatedCart();
         }
 
     }
@@ -488,7 +499,6 @@
                 var item = CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated);
                 item!.Quantity += amount;
             }
-            UpdatedCart();
         }
     }
 
@@ -499,7 +509,6 @@
             isOrder = true;
             CurrentOrder = order;
             editContext.NotifyValidationStateChanged();
-            UpdatedCart();
         }
     }
 
@@ -527,21 +536,20 @@
         {
             viewOrders = loadedOrders.ToList();
         }
-        
-    }
 
+    }
 
     private async Task<AutoCompleteDataProviderResult<Customer>> CustomersDataProvider(AutoCompleteDataProviderRequest<Customer> request)
     {
-        var customers = await CustomerService.GetExistingCustomers(request.Filter.Value);
+        var customers = loadedCustomers.AsEnumerable().Where(c => c.PhoneNumber.Contains(request.Filter.Value));
         return await Task.FromResult(new AutoCompleteDataProviderResult<Customer> { Data = customers, TotalCount = customers.Count() });
     }
 
-    private async Task OnAutoCompleteChanged(Customer customer)
+    private async Task OnCustomerSearchChanged(Customer customer)
     {
         if (customer is not null) {
             CurrentOrder.CustomerID = customer.Id;
-            CurrentOrder.OrderedBy = customer;
+            //CurrentOrder.OrderedBy = customer;
 
             var isEmployee = await EmployeeService.GetEmployeeByPhoneNumber(customer.PhoneNumber);
 
@@ -553,14 +561,12 @@
             {
                 CurrentOrder.DiscountPercent = 0;
             }
-
-            editContext.Validate();
-            return;
         }
-
-        CurrentOrder.CustomerID = 0;
-        CurrentOrder.OrderedBy = null;
-        CurrentOrder.DiscountPercent = 0;
+        else
+        {
+            CurrentOrder.CustomerID = 0;
+            CurrentOrder.DiscountPercent = 0;
+        }
     }
 
     public async Task SubmitOrder()
@@ -588,7 +594,7 @@
 
             submitButton.ShowLoading("Creating...");
 
-            CurrentOrder.EmployeeID = null;
+            CurrentOrder.EmployeeID = string.Empty;
             CurrentOrder.Processed = null;
             CurrentOrder.PickedUp = null;
 
