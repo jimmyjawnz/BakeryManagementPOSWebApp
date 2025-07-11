@@ -81,20 +81,29 @@ else
                 throw new Exception("Failed to add product: No existing/linked Order.");
             }
 
-            // Add product to order, therefor adding to cart
-            CurrentOrder.OrderItems.Add(
-                new OrderItem()
-                {
-                    Product = product,
-                    ProductId = product.Id,
-                    Quantity = Amount,
-                    RowPrice = product.Price * Amount
-                }
-            );
+            // Check if order already has the product
+            var duplicateItem = CurrentOrder.OrderItems.Where(oi => oi.ProductId == product.Id).FirstOrDefault();
+            if (duplicateItem is not null)
+            {
+                duplicateItem.Quantity += Amount;
+            }
+            else
+            {
+                // Add product to order, therefor adding to cart
+                CurrentOrder.OrderItems.Add(
+                    new OrderItem()
+                    {
+                        Product = product,
+                        ProductId = product.Id,
+                        Quantity = Amount,
+                        RowPrice = product.Price * Amount,
+                        Created = DateTime.Now
+                    }
+                );
+            }
 
             // Reset amount and call for cart update
             Amount = 1;
-
             OnCartChanged.InvokeAsync();
         }
         catch (Exception ex)

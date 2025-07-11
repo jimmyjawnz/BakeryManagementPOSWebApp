@@ -39,7 +39,6 @@
                         <i class="bi bi-box-seam"></i> Products
                         </TitleTemplate>
                         <Content>
-                            
                             <div class="p-1">
                                 <div class="input-group mt-2">
                                     <Button @onclick="() => { productSearch = string.Empty; OnProductSearchChanged(new()); }" Color="ButtonColor.None"><i class="bi bi-x-lg"></i></Button>
@@ -165,7 +164,7 @@
                                             <td class="text-end">
                                                 @String.Format("{0:C2}", item.RowPrice)
                                                 <br />
-                                                <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product!.Price))</span>
+                                                <span class="text-muted" style="font-size: small;">(@String.Format("{0:C2}", item.Product.Price))</span>
                                             </td>
                                             <td class="text-end">
                                                 <Button @onclick="() => RemoveFromCart(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
@@ -218,7 +217,9 @@
                                                         <option selected disabled value="">Select a Payment Type</option>
                                                         <option value="Cash">Cash</option>
                                                         <option value="Credit">Credit</option>
+                                                        <option value="Debit">Debit</option>
                                                         <option value="CashAndCredit">Cash & Credit</option>
+                                                        <option value="CashAndDebit">Cash & Debit</option>
                                                         <option value="ETransfer">E-Transfer</option>
                                                         <option value="Other">Other</option>
                                                     </InputSelect>
@@ -229,7 +230,10 @@
                                         <div class="form-group row mb-2">
                                             <div class="col-md-5 col-md-12">
                                                 <label>Discount Amount (%)</label>
-                                                <NumberInput Value="CurrentOrder.DiscountPercent" TValue="int" ValueExpression="() => CurrentOrder.DiscountPercent" ValueChanged="(value) => CurrentOrder.DiscountPercent = value" EnableMinMax="true" Min="0" Max="100" />
+                                                <div class="input-group">
+                                                    <NumberInput Value="CurrentOrder.DiscountPercent" TValue="int" ValueExpression="() => CurrentOrder.DiscountPercent" ValueChanged="(value) => { CurrentOrder.DiscountPercent = value; UpdateCart(); }" EnableMinMax="true" Min="0" Max="100" />
+                                                    <span class="input-group-text">%</span>
+                                                </div>
                                             </div>
                                         </div>
                                         @if (EmptyOrder)
@@ -280,7 +284,6 @@
                         @* Calculator *@
                         <div class="row" style="height: 32vh">
                             <div class="col bg-secondary">
-                                <span><i class="fa-solid fa-calculator me-1"></i> Calculator</span>
                             </div>
                         </div>
                     }
@@ -323,6 +326,7 @@
     public Order CurrentOrder { get; set; } = new();
 
     private bool isOrder { get; set; } = false;
+
     private string? customerPhone;
     private string? productSearch;
     private string? orderSearch;
@@ -337,6 +341,7 @@
         // Allows custom validation messages for order processing
         editContext = new(CurrentOrder);
         editContext.OnValidationRequested += HandleValidationRequested;
+        editContext.OnFieldChanged += HandleFieldChange;
         messageStore = new(editContext);
 
         // Set current user as processor
@@ -363,6 +368,31 @@
         {
             messageStore?.Add(() => CurrentOrder.OrderItems!, "Cannot proccess when cart is empty.");
         }
+
+        // Detects no customer
+        if (CurrentOrder.CustomerID <= 0)
+        {
+            messageStore?.Add(() => CurrentOrder.CustomerID, "Please select a customer.");
+        }
+
+    }
+
+    private async void HandleFieldChange(object? sender, FieldChangedEventArgs args)
+    {
+        await Task.Yield();
+
+        // Detects no customer
+        if (args.FieldIdentifier.FieldName == "customerPhone" && CurrentOrder.CustomerID <= 0)
+        {
+            messageStore?.Clear(() => CurrentOrder.CustomerID);
+            messageStore?.Add(() => CurrentOrder.CustomerID, "Please select a customer.");
+        }
+        else
+        {
+            messageStore?.Clear(() => CurrentOrder.CustomerID);
+        }
+
+        editContext.NotifyValidationStateChanged();
 
     }
 
@@ -437,13 +467,9 @@
         }
     }
 
-    private void ChangedDiscountPercent(int value)
-    {
-        CurrentOrder.DiscountPercent = value;
-    }
-
     public void UpdateCart()
     {
+        // Disable clear button on empty and vice versa
         if (CurrentOrder.OrderItems.Count <= 0)
         {
             ClearButtonDisabled = true;
@@ -452,6 +478,25 @@
         {
             ClearButtonDisabled = false;
         }
+
+        // Calculate prices
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[i] -- Calculating Prices...");
+        CurrentOrder.SumOfItems = 0.0m;
+
+        foreach (OrderItem item in CurrentOrder.OrderItems)
+        {
+            CurrentOrder.SumOfItems += item.Product.Price * item.Quantity;
+        }
+        Console.WriteLine("[i] -- SumOfItems: " + CurrentOrder.SumOfItems.ToString());
+
+        CurrentOrder.DiscountAmount = CurrentOrder.SumOfItems * (CurrentOrder.DiscountPercent / 100.0m);
+        Console.WriteLine("[i] -- DiscountAmount: " + CurrentOrder.DiscountAmount.ToString());
+
+        CurrentOrder.TotalAmount = CurrentOrder.SumOfItems - CurrentOrder.DiscountAmount;
+
+        Console.WriteLine("[i] -- TotalAmount: " + CurrentOrder.TotalAmount.ToString() + "\n");
+        Console.ForegroundColor = ConsoleColor.Gray;
     }
 
     public async Task ClearCart()
@@ -472,24 +517,8 @@
         // Clear Cart if confrimed
         if (confirmation)
         {
-            CurrentOrder.OrderItems!.Clear();
+            CurrentOrder.OrderItems.Clear();
             UpdateCart();
-        }
-    }
-
-    public void AddToCart(Product product)
-    {
-        if (product is not null)
-        {
-            CurrentOrder.OrderItems!.Add(new OrderItem()
-            {
-                Product = product,
-                ProductId = product.Id,
-                Quantity = Amount,
-                RowPrice = product.Price * Amount
-            });
-
-            Amount = 1;
         }
     }
 
@@ -497,7 +526,7 @@
     {
         if (orderItem is not null)
         {
-            CurrentOrder.OrderItems!.Remove(orderItem);
+            CurrentOrder.OrderItems.Remove(orderItem);
         }
         UpdateCart();
     }
@@ -506,17 +535,30 @@
     {
         if (orderItem is not null)
         {
+            // Remove item from cart if quanity is 1
             if (orderItem.Quantity <= 1 && amount < 0)
             {
                 RemoveFromCart(orderItem);
             }
             else if (orderItem.Quantity <= 99)
             {
+                // Change quantity if not at max or min
                 if (orderItem.Quantity == 99 && amount > 0)
                     return;
-                var item = CurrentOrder.OrderItems!.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated);
-                item!.Quantity += amount;
+
+                var item = CurrentOrder.OrderItems.FirstOrDefault(o => o.DateCreated == orderItem.DateCreated);
+
+                // If item doesnt exist remove
+                if (item is null)
+                {
+                    RemoveFromCart(orderItem);
+                    OnError(new Exception("Item could not be found. Removing from cart."));
+                    return;
+                }
+
+                item.Quantity += amount;
             }
+            UpdateCart();
         }
     }
 
@@ -567,7 +609,7 @@
     {
         if (customer is not null) {
             CurrentOrder.CustomerID = customer.Id;
-            //CurrentOrder.OrderedBy = customer;
+            CurrentOrder.OrderedBy = customer;
 
             var isEmployee = await EmployeeService.GetEmployeeByPhoneNumber(customer.PhoneNumber);
 
@@ -583,6 +625,7 @@
         else
         {
             CurrentOrder.CustomerID = 0;
+            CurrentOrder.OrderedBy = null;
             CurrentOrder.DiscountPercent = 0;
         }
     }
@@ -639,7 +682,7 @@
 
         if (confirmation)
         {
-            CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User);
+            CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User)!;
             CurrentOrder.Processed = DateTime.Now;
             CurrentOrder.PickedUp = DateTime.Now;
 
