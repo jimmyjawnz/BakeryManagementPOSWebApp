@@ -31,6 +31,16 @@ namespace BakeryManagementPOSWebApp.Services.Orders
                 .Include(o => o.ProcessedBy)
                 .Where(p => p.Deleted == null).ToListAsync();
         }
+
+        public async Task<List<Order>> GetExistingOrders(string filter)
+        {
+            return await _dbContext.Orders
+                .Include(o => o.OrderedBy)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .Include(o => o.ProcessedBy)
+                .Where(p => p.Deleted == null && p.OrderedBy.FullName.Contains(filter)).ToListAsync();
+        }
         public async Task<List<Order>> GetTrashedOrders()
         {
             return await _dbContext.Orders.Where(p => p.Deleted != null).ToListAsync();

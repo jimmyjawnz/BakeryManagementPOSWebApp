@@ -6,7 +6,8 @@
 <PageTitle>Front Till</PageTitle>
 <title>Front Till</title>
 
-@inject ProductService ProductService
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
 @inject CustomerService CustomerService
 @inject EmployeeService EmployeeService
 @inject UserManager<Employee> UserManager
@@ -39,8 +40,14 @@
                         <i class="bi bi-box-seam"></i> Products
                         </TitleTemplate>
                         <Content>
+                            
                             <div class="p-1">
-                                <CardProducts Products="@products" OnCartChanged="UpdatedCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
+                                <div class="mt-2">
+                                    <TextInput @bind-Value="@productSearch" @oninput="OnInputChanged" Placeholder="Search a product..."/>
+                                </div>
+                                <div class="mt-2">
+                                    <CardProducts Products="@viewProducts" OnCartChanged="UpdatedCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
+                                </div>
                             </div>
                         </Content>
                     </Tab>
@@ -53,47 +60,52 @@
                         </TitleTemplate>
                         <Content>
                             <div class="p-1">
-                                @if (orders is null)
-                                {
-                                    <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
-                                }
-                                else if (orders.Count <= 0)
-                                {
-                                    <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available orders found." />
-                                }
-                                else
-                                {
-                            	    <table class="table table-striped table-hover">
-		                                <thead>
-			                                <tr>
-				                                <th width="15%">ID #</th>
-				                                <th width="10%">Status</th>
-				                                <th width="30%">Customer</th>
-				                                <th width="30%">Notes</th>
-				                                <th width="15%" class="text-center"></th>
-			                                </tr>
-		                                </thead>
-		                                <tbody class="table-group-divider">
-                                            @foreach (Order item in orders)
-                                            {
-                                                @if(true)
-                                                {
-                                                    <tr>
-                                                    <td>@item.Id</td>
-                                                    <td class="text-center">
-                                                        <OrderStatus status="Status.PassedPickupDate" />
-                                                    </td>
-                                                    <td>@item.OrderedBy.FullName</td>
-                                                    <td>@item.Notes</td>
-                                                    <td>
-                                                        <Button @onclick="() => AddOrderToCart(item)" Color="ButtonColor.Primary" Class="float-end">Select</Button>
-                                                    </td>
-                                                </tr>
-                                                }
-                                            }
-                                        </tbody>
-                                    </table>
-                                }
+                                    <div class="mt-2">
+                                        <TextInput @bind-Value="@orderSearch" @oninput="OnOrderInputChanged" Placeholder="Search a order..." />
+                                    </div>
+                                    <div class="mt-2">
+                                        @if (viewOrders is null)
+                                        {
+                                            <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+                                        }
+                                        else if (viewOrders.Count <= 0)
+                                        {
+                                            <UserMessage Color="AlertColor.Warning" Type="MessageType.Info"Message="No available orders found." />
+                                        }
+                                        else
+                                        {
+                            	            <table class="table table-striped table-hover">
+		                                        <thead>
+			                                        <tr>
+				                                        <th width="15%">ID #</th>
+				                                        <th width="10%">Status</th>
+				                                        <th width="30%">Customer</th>
+				                                        <th width="30%">Notes</th>
+				                                        <th width="15%" class="text-center"></th>
+			                                        </tr>
+		                                        </thead>
+		                                        <tbody class="table-group-divider">
+                                                    @foreach (Order item in viewOrders)
+                                                    {
+                                                        @if(true)
+                                                        {
+                                                            <tr>
+                                                            <td>@item.Id</td>
+                                                            <td class="text-center">
+                                                                <OrderStatus status="Status.PassedPickupDate" />
+                                                            </td>
+                                                            <td>@item.OrderedBy.FullName</td>
+                                                            <td>@item.Notes</td>
+                                                            <td>
+                                                                <Button @onclick="() => AddOrderToCart(item)" Color="ButtonColor.Primary" Class="float-end">Select</Button>
+                                                            </td>
+                                                        </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        }
+                                    </div>
                             </div>
                         </Content>
                     </Tab>
@@ -283,10 +295,15 @@
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
 
+    private ApplicationDbContext? Context;
+
     private List<ToastMessage> ToastMessages = new();
 
-    private List<Product>? products { get; set; } = new();
-    private List<Order>? orders { get; set; } = new();
+    private ICollection<Product> loadedProducts = [];
+    private ICollection<Order> loadedOrders = [];
+
+    private List<Product>? viewProducts { get; set; } = new();
+    private List<Order>? viewOrders { get; set; } = new();
 
     private int Amount { get; set; } = 1;
 
@@ -304,11 +321,13 @@
 
     private bool isOrder { get; set; } = false;
     private string? customerPhone;
+    private string? productSearch;
+    private string? orderSearch;
 
     protected override async Task OnInitializedAsync()
     {
         CurrentOrder ??= new();
-        
+
         if (CurrentOrder.OrderedBy is not null)
         {
             customerPhone = CurrentOrder.OrderedBy.PhoneAndFullName;
@@ -332,13 +351,66 @@
 
     }
 
+    /// <summary>
+    /// Loads Till Data (products and orders)
+    /// </summary>
+    /// <returns></returns>
     public async Task LoadData()
     {
-        products = null;
-        orders = null;
-        await Task.Delay(10);
-        products = await ProductService.GetAvailableProducts();
-        orders = await OrderService.GetExistingOrders();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[i] -- Loading Till Data...");
+
+        // Reset viewed Products
+        viewProducts = null;
+
+        // Create a DbContext
+        Context = DbFactory.CreateDbContext();
+
+        Console.WriteLine("[i] -- Context Created");
+
+        // Load Products for this session
+        loadedProducts = await Context.Products.Where(p => p.Deleted == null).OrderBy(p => p.Name).ToListAsync();
+
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[i] -- Products Loaded");
+
+        // Parse through products that match search or tags
+        if (!string.IsNullOrEmpty(productSearch))
+        {
+            viewProducts = await loadedProducts.AsQueryable().Where(p => p.Name.Contains(productSearch)).ToListAsync();
+        }
+        else
+        {
+            viewProducts = loadedProducts.ToList();
+        }
+
+        // Reset viewed Orders
+        viewOrders = null;
+
+        // Load Orders for this session
+        loadedOrders = Context.Orders.Include(o => o.OrderedBy)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .Where(p => p.Deleted == null).ToList();
+
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[i] -- Orders Loaded");
+
+        // Parse through orders that match search or tags
+        if (!string.IsNullOrEmpty(orderSearch))
+        {
+            viewOrders = await loadedOrders.AsQueryable().Where(o => o.OrderedBy.FullName.Contains(orderSearch)).ToListAsync();
+        }
+        else
+        {
+            viewOrders = loadedOrders.ToList();
+        }
+
+        // Dispose Context
+        Context.Dispose();
+
+        Console.WriteLine("[i] -- Context Disposed");
+        Console.ForegroundColor = ConsoleColor.Gray;
     }
 
     private async Task OnClickProductsTab()
@@ -364,7 +436,7 @@
 
     private void UpdatedCart()
     {
-        
+
     }
 
     private void ChangedDiscountPercent(int value)
@@ -448,6 +520,31 @@
             UpdatedCart();
         }
     }
+
+    private async Task OnInputChanged(ChangeEventArgs args)
+    {
+        if (args.Value is null)
+        {
+            return;
+        }
+
+        Console.Write(args.Value);
+
+        viewProducts = loadedProducts.AsEnumerable().Where(p => p.Name.ToLower().Contains(args.Value.ToString().ToLower())).ToList();
+    }
+
+    private async Task OnOrderInputChanged(ChangeEventArgs args)
+    {
+        if (args.Value is null)
+        {
+            return;
+        }
+
+        Console.Write(args.Value);
+
+        viewOrders = loadedOrders.AsEnumerable().Where(o => o.OrderedBy.FullName.Contains(args.Value.ToString())).ToList();
+    }
+
 
     private async Task<AutoCompleteDataProviderResult<Customer>> CustomersDataProvider(AutoCompleteDataProviderRequest<Customer> request)
     {

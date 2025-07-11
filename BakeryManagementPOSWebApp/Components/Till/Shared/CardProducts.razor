@@ -1,4 +1,7 @@
-﻿@if (Products is null)
+﻿@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+@if (Products is null)
 {
     <UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
 }

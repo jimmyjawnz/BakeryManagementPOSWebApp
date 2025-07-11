@@ -26,6 +26,10 @@ namespace BakeryManagementPOSWebApp.Services.Products
         {
             return await _dbContext.Products.Where(p => p.Deleted == null).ToListAsync();
         }
+        public async Task<List<Product>> GetExistingProducts(string filter)
+        {
+            return await _dbContext.Products.Where(p => p.Deleted == null && p.Name.Contains(filter)).ToListAsync();
+        }
         public async Task<List<Product>> GetTrashedProducts()
         {
             return await _dbContext.Products.Where(p => p.Deleted != null).ToListAsync();
