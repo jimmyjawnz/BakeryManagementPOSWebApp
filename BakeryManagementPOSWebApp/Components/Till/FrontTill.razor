@@ -43,7 +43,7 @@
                             
                             <div class="p-1">
                                 <div class="mt-2">
-                                    <TextInput @bind-Value="@productSearch" @oninput="OnInputChanged" Placeholder="Search a product..."/>
+                                    <TextInput @bind-Value="@productSearch" @oninput="OnProductSearchChanged" Placeholder="Search a product..." />
                                 </div>
                                 <div class="mt-2">
                                     <CardProducts Products="@viewProducts" OnCartChanged="UpdatedCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
@@ -61,7 +61,7 @@
                         <Content>
                             <div class="p-1">
                                     <div class="mt-2">
-                                        <TextInput @bind-Value="@orderSearch" @oninput="OnOrderInputChanged" Placeholder="Search a order..." />
+                                        <TextInput @bind-Value="@orderSearch" @oninput="OnOrderSearchChanged" Placeholder="Search a order..." />
                                     </div>
                                     <div class="mt-2">
                                         @if (viewOrders is null)
@@ -337,7 +337,7 @@
         editContext.OnValidationRequested += HandleValidationRequested;
         messageStore = new(editContext);
 
-        await LoadData();
+        LoadData();
     }
     private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
     {   
@@ -355,7 +355,7 @@
     /// Loads Till Data (products and orders)
     /// </summary>
     /// <returns></returns>
-    public async Task LoadData()
+    public void LoadData()
     {
         Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("[i] -- Loading Till Data...");
@@ -369,20 +369,11 @@
         Console.WriteLine("[i] -- Context Created");
 
         // Load Products for this session
-        loadedProducts = await Context.Products.Where(p => p.Deleted == null).OrderBy(p => p.Name).ToListAsync();
+        loadedProducts = Context.Products.Where(p => p.Deleted == null).OrderBy(p => p.Name).ToList();
+        viewProducts = loadedProducts.ToList();
 
         Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("[i] -- Products Loaded");
-
-        // Parse through products that match search or tags
-        if (!string.IsNullOrEmpty(productSearch))
-        {
-            viewProducts = await loadedProducts.AsQueryable().Where(p => p.Name.Contains(productSearch)).ToListAsync();
-        }
-        else
-        {
-            viewProducts = loadedProducts.ToList();
-        }
 
         // Reset viewed Orders
         viewOrders = null;
@@ -392,24 +383,15 @@
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
                 .Where(p => p.Deleted == null).ToList();
+        viewOrders = loadedOrders.ToList();
 
         Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("[i] -- Orders Loaded");
 
-        // Parse through orders that match search or tags
-        if (!string.IsNullOrEmpty(orderSearch))
-        {
-            viewOrders = await loadedOrders.AsQueryable().Where(o => o.OrderedBy.FullName.Contains(orderSearch)).ToListAsync();
-        }
-        else
-        {
-            viewOrders = loadedOrders.ToList();
-        }
-
         // Dispose Context
         Context.Dispose();
 
-        Console.WriteLine("[i] -- Context Disposed");
+        Console.WriteLine("[i] -- Context Disposed\n");
         Console.ForegroundColor = ConsoleColor.Gray;
     }
 
@@ -521,28 +503,31 @@
         }
     }
 
-    private async Task OnInputChanged(ChangeEventArgs args)
+    private void OnProductSearchChanged(ChangeEventArgs args)
     {
-        if (args.Value is null)
+        // Parse through products that match search or tags
+        if (args.Value is not null && !string.IsNullOrEmpty(args.Value.ToString()))
         {
-            return;
+            viewProducts = loadedProducts.AsEnumerable().Where(p => p.Name.ToLower().Contains(args.Value.ToString()!.ToLower())).ToList();
         }
-
-        Console.Write(args.Value);
-
-        viewProducts = loadedProducts.AsEnumerable().Where(p => p.Name.ToLower().Contains(args.Value.ToString().ToLower())).ToList();
+        else
+        {
+            viewProducts = loadedProducts.ToList();
+        }
     }
 
-    private async Task OnOrderInputChanged(ChangeEventArgs args)
+    private void OnOrderSearchChanged(ChangeEventArgs args)
     {
-        if (args.Value is null)
+        // Parse through orders that match search or tags
+        if (args.Value is not null && !string.IsNullOrEmpty(args.Value.ToString()))
         {
-            return;
+            viewOrders = loadedOrders.AsEnumerable().Where(o => o.OrderedBy.FullName.ToLower().Contains(args.Value.ToString()!.ToLower())).ToList();
         }
-
-        Console.Write(args.Value);
-
-        viewOrders = loadedOrders.AsEnumerable().Where(o => o.OrderedBy.FullName.Contains(args.Value.ToString())).ToList();
+        else
+        {
+            viewOrders = loadedOrders.ToList();
+        }
+        
     }
 
 
