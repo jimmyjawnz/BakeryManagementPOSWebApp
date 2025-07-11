@@ -41,8 +41,10 @@
                         <Content>
                             
                             <div class="p-1">
-                                <div class="mt-2">
-                                    <TextInput @bind-Value="@productSearch" @oninput="OnProductSearchChanged" Placeholder="Search a product..." />
+                                <div class="input-group mt-2">
+                                    <Button @onclick="() => { productSearch = string.Empty; OnProductSearchChanged(new()); }" Color="ButtonColor.None"><i class="bi bi-x-lg"></i></Button>
+                                    <TextInput Class="form-control" @bind-Value="@productSearch" @oninput="OnProductSearchChanged" Placeholder="Search a product..." />
+                                    <Button Color="ButtonColor.Secondary" TooltipTitle="Toggle tags"><i class="bi bi-tags"></i></Button>
                                 </div>
                                 <div class="mt-2">
                                     <CardProducts Products="@viewProducts" OnCartChanged="UpdateCart" OnError="(ex) => OnError((Exception?)(ex))" CurrentOrder="@CurrentOrder" />
@@ -59,7 +61,8 @@
                         </TitleTemplate>
                         <Content>
                             <div class="p-1">
-                                    <div class="mt-2">
+                                    <div class="input-group mt-2">
+                                        <Button @onclick="() => { orderSearch = string.Empty; OnOrderSearchChanged(new()); }" Color="ButtonColor.None"><i class="bi bi-x-lg"></i></Button>
                                         <TextInput @bind-Value="@orderSearch" @oninput="OnOrderSearchChanged" Placeholder="Search a order..." />
                                     </div>
                                     <div class="mt-2">
@@ -124,7 +127,7 @@
                                     <th>Product</th>
                                     <th width="20%" class="text-end">Price</th>
                                     <th width="10%" class="text-center">
-                                        <Button @ref="ClearButton" @onclick="ClearCart" Color="ButtonColor.Danger" Outline="true">Clear</Button>
+                                        <Button Disabled="@ClearButtonDisabled" @onclick="ClearCart" Color="ButtonColor.Danger" Outline="true" TooltipTitle="Clear cart">Clear</Button>
                                     </th>
                                 </tr>
                             </thead>
@@ -311,7 +314,7 @@
     private ValidationMessageStore? messageStore;
     private Button submitButton { get; set; } = default!;
 
-    private Button ClearButton { get; set; } = default!;
+    private bool ClearButtonDisabled { get; set; } = true;
     private ConfirmDialog ConfirmModal = default!;
 
     private Tabs tabs { get; set; } = default!;
@@ -326,29 +329,36 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentOrder ??= new();
-
         if (CurrentOrder.OrderedBy is not null)
         {
             customerPhone = CurrentOrder.OrderedBy.PhoneAndFullName;
         }
 
+        // Allows custom validation messages for order processing
         editContext = new(CurrentOrder);
         editContext.OnValidationRequested += HandleValidationRequested;
         messageStore = new(editContext);
 
+        // Set current user as processor
         if (CurrentOrder.ProcessedBy is null)
         {
             CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User)!;
         }
 
+        // Load Till Data
         LoadData();
     }
+
+    /// <summary>
+    /// Custom validation logic
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="args"></param>
     private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
     {   
         messageStore?.Clear();
 
-        // Custom validation logic
+        // Detects empty cart
         if (CurrentOrder.OrderItems is null || CurrentOrder.OrderItems.Count <= 0)
         {
             messageStore?.Add(() => CurrentOrder.OrderItems!, "Cannot proccess when cart is empty.");
@@ -434,12 +444,19 @@
 
     public void UpdateCart()
     {
-        
+        if (CurrentOrder.OrderItems.Count <= 0)
+        {
+            ClearButtonDisabled = true;
+        }
+        else
+        {
+            ClearButtonDisabled = false;
+        }
     }
 
     public async Task ClearCart()
     {
-        // If Cart is empty return
+        // If Cart is empty return nothing
         if (CurrentOrder.OrderItems!.Count <= 0)
         {
             return;
@@ -456,6 +473,7 @@
         if (confirmation)
         {
             CurrentOrder.OrderItems!.Clear();
+            UpdateCart();
         }
     }
 
@@ -481,7 +499,7 @@
         {
             CurrentOrder.OrderItems!.Remove(orderItem);
         }
-
+        UpdateCart();
     }
 
     public void ChangeQty(OrderItem orderItem, int amount)
