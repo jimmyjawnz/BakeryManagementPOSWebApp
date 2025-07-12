@@ -638,86 +638,67 @@
 
     public async Task SubmitOrder()
     {
-        int? result = null;
+        // Create a DbContext
+        Context = DbFactory.CreateDbContext();
 
-        if (EmptyOrder)
-        {
-            if(CurrentOrder.Id != 0)
-            {
-                submitButton.ShowLoading("Updating...");
+        // Send feedback to user
+        submitButton.ShowLoading("Processing...");
 
-                result = await OrderService.UpdateOrder(CurrentOrder);
-
-                if (result is null || !result.HasValue)
-                {
-                    submitButton.HideLoading();
-                    return;
-                }
-
-                submitButton.HideLoading();
-                Navigation.Refresh(true);
-                return;
-            }
-
-            submitButton.ShowLoading("Creating...");
-
-            CurrentOrder.EmployeeID = string.Empty;
-            CurrentOrder.Processed = null;
-            CurrentOrder.PickedUp = null;
-
-            result = await OrderService.CreateOrder(CurrentOrder);
-
-            if (result is null || !result.HasValue)
-            {
-                submitButton.HideLoading();
-                return;
-            }
-
-            submitButton.HideLoading();
-            Navigation.Refresh(true);
-            return;
-        }
-
-        submitButton.ShowLoading("Proccessing...");
-
+        // Ask user to complete the transaction with the customer
         var confirmation = await ConfirmModal.ShowAsync(
             title: "Process Payment for Customer",
-            message1: "Please proccess the customer's payment in person to complete the transaction.",
+            message1: "Please process the customer's payment in person to complete the transaction.",
             message2: "Have you completed the transaction?"
         );
 
-        if (confirmation)
+        try
         {
-            CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User)!;
-            CurrentOrder.Processed = DateTime.Now;
-            CurrentOrder.PickedUp = DateTime.Now;
-
-            if (CurrentOrder.PickupDate is null)
+            // If confirmed created or update the order in the database
+            if (confirmation)
             {
-                CurrentOrder.Pickup = DateTime.Now;
-            }
+                CurrentOrder.EmployeeID = UserManager.GetUserId((await authenticationStateTask).User)!;
 
-            if (isOrder)
-            {
-                result = await OrderService.UpdateOrder(CurrentOrder);
-            }
-            else
-            {
-                result = await OrderService.CreateOrder(CurrentOrder);
-            }
+                // If pickup is null set to right now
+                CurrentOrder.Pickup ??= DateTime.Now;
 
-            if (result is null || !result.HasValue)
-            {
-                submitButton.HideLoading();
-                return;
-            }
+                // Set processed and pickedup date
+                CurrentOrder.Processed = DateTime.Now;
+                CurrentOrder.PickedUp = DateTime.Now;
 
-            submitButton.HideLoading();
-            Navigation.Refresh(true);
+
+                // Remove objects attached to the Order
+                CurrentOrder.OrderedBy = null;
+                CurrentOrder.ProcessedBy = null;
+                foreach (OrderItem item in CurrentOrder.OrderItems)
+                {
+                    item.Product = null;
+                }
+
+                // If it is an imported order we update the order
+                // instead of creating a new one
+                if (isOrder)
+                {
+                    Context.Orders.Attach(CurrentOrder);
+                }
+                else
+                {
+                    await Context.Orders.AddAsync(CurrentOrder);
+                }
+
+                await Context.SaveChangesAsync();
+            }
         }
-
-        submitButton.HideLoading();
-        return;
+        catch (Exception ex) 
+        {
+            OnError(ex);
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            Context.Dispose();
+            submitButton.HideLoading();
+            CurrentOrder = new();
+        }
 
     }
 
