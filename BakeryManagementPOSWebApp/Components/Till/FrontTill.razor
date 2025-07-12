@@ -611,7 +611,13 @@
             CurrentOrder.CustomerID = customer.Id;
             CurrentOrder.OrderedBy = customer;
 
-            var isEmployee = await EmployeeService.GetEmployeeByPhoneNumber(customer.PhoneNumber);
+            // Create a DbContext
+            Context = DbFactory.CreateDbContext();
+
+            var isEmployee = await Context.Employees.Where(e => e.PhoneNumber == customer.PhoneNumber).FirstOrDefaultAsync();
+
+            // Dispose DbContext
+            Context.Dispose();
 
             if (isEmployee is not null)
             {
