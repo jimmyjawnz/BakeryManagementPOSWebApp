@@ -86,6 +86,7 @@ else
             if (duplicateItem is not null)
             {
                 duplicateItem.Quantity += Amount;
+                duplicateItem.RowPrice = duplicateItem.Product.Price * duplicateItem.Quantity;
             }
             else
             {

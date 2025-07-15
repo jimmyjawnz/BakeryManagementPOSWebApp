@@ -19,8 +19,38 @@
 
 @code {
 	[Parameter]
-	public Status status { get; set; }
+	public Order? order { get; set; }
+
+	[Parameter]
+	public Status status { get; set; } = Status.Unknown;
 
 	[Parameter]
 	public string? Class { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (order is not null)
+		{
+			if (order.Processed is not null)
+			{
+				status = Status.Complete;
+			}
+			else if (order.PickedUp is not null)
+			{
+				status = Status.NeedsProcessing;
+			}
+			else if (order.Pickup is not null && order.Pickup < DateTime.Now)
+			{
+				status = Status.PassedPickupDate;
+			}
+			else if (order.Pickup is not null)
+			{
+				status = Status.WaitingPickup;
+			}
+			else
+			{
+				status = Status.Unknown;
+			}
+		}
+	}
 }

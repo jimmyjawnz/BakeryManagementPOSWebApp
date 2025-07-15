@@ -58,21 +58,22 @@ builder.Services.AddIdentityCore<Employee>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseHttpsRedirection();
     app.UseMigrationsEndPoint();
 }
 else
 {
+    app.Urls.Add("http://0.0.0.0:5000");
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
