@@ -16,15 +16,15 @@
     </div>
     <div class="row" style="min-height: 95vh">
         <div class="col-md-6 p-1 no-print">
+            @* Product List *@
             <div class="row">
-                <div style="min-height: 45vh">
-                    <h4 class="m-0">Products</h4>
-                    <BakeryManagementPOSWebApp.Components.Database.Pages.Product.List Minimum=true ShowLabels=true OnSelected="(product) => AddLabel(product)" />
+                <div style="min-height: 45vh; max-height: 45vh;">
+                    <BakeryManagementPOSWebApp.Components.Database.Pages.Product.List Height=400 Minimum=true ShowLabels=true OnSelected="(product) => AddLabel(product)" />
                 </div>
             </div>
-            <div class="row p-3 border-top" style="max-height: 45vh">
-                <h4 class="p-0">Selected Labels</h4>
-                <table class="table table-striped table-light">
+            @* Current Labels *@
+            <div class="row p-3 border-top" style="height: 10vh;">
+                <table class="table table-striped table-light overflow-y-scroll" style="height: 45vh;">
                     <thead>
                         <tr>
                             <th class="text-center">Amount</th>
@@ -37,7 +37,7 @@
                         {
                             <tr>
                                 <td class="text-center">@label.Quantity</td>
-                                <td class="text-center">@label.Product!.Name</td>
+                                <td class="text-center">@label.Product.Name</td>
                             </tr>
                         }
                     </tbody>
@@ -45,9 +45,11 @@
             </div>
         </div>
         <div class="col-md-6 col-print-12 p-1">
+            @* Printable Area *@
             <div class="row" style="min-height: 89vh; max-height: 100vh">
 
             </div>
+            @* Buttons *@
             <div class="row p-1 no-print" style="min-height: 5vh">
                 <Button onclick="window.print()" Color="ButtonColor.Primary">Print Labels</Button>
             </div>
@@ -75,14 +77,14 @@
                 Product = product
             });
         }
-        
+
     }
 
     public class Label
     {
         public int Quantity { get; set; }
 
-        public Product? Product { get; set; }
+        public Product Product { get; set; } = new();
 
     }
 }

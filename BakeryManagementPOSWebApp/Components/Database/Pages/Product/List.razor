@@ -15,10 +15,16 @@ else
 		  Class="table table-hover table-striped table-sm"
 		  DataProvider="ProductsDataProvider"
 		  AllowFiltering="true"
+		  AllowPaging="true"
+		  PageSize="10"
+		  PageSizeSelectorVisible="true"
+		  PageSizeSelectorItems="@(new int[] { 10,20,50,100 })"
+		  FixedHeader="true"
+		  Height="@Height"
 		  Responsive="true"
 		  AllowRowClick="true"
 		  OnRowDoubleClick="(args) => OnInfoModal.InvokeAsync(args.Item)"
-		  FiltersRowCssClass="bg-secondary bg-opacity-25 border-bottom-0"
+		  FiltersRowCssClass="bg-secondary border-bottom-0"
 		  HeaderRowCssClass="">
 
 		<GridColumns>
@@ -109,6 +115,9 @@ else
 
 	[Parameter]
 	public bool Minimum { get; set; } = false;
+
+	[Parameter]
+	public int Height { get; set; } = 575;
 
 	private ApplicationDbContext Context = default!;
 
