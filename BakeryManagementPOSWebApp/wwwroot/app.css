@@ -62,3 +62,13 @@ h1:focus {
 td {
     align-content: center;
 }
+
+@media print {
+    .no-print {
+        display: none;
+    }
+    .col-print-12 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+}

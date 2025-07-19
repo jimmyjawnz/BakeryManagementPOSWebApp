@@ -1,0 +1,88 @@
+﻿@layout EmptyLayout
+@page "/dashboard/labels"
+
+@attribute [Authorize]
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<PageTitle>Labels</PageTitle>
+<title>Labels</title>
+
+<div class="container-fluid" style="min-height: 100vh" id="content">
+    @* Nav Bar *@
+    <div class="row no-print">
+        <NavMenu Height="5vh" />
+    </div>
+    <div class="row" style="min-height: 95vh">
+        <div class="col-md-6 p-1 no-print">
+            <div class="row">
+                <div style="min-height: 45vh">
+                    <h4 class="m-0">Products</h4>
+                    <BakeryManagementPOSWebApp.Components.Database.Pages.Product.List Minimum=true ShowLabels=true OnSelected="(product) => AddLabel(product)" />
+                </div>
+            </div>
+            <div class="row p-3 border-top" style="max-height: 45vh">
+                <h4 class="p-0">Selected Labels</h4>
+                <table class="table table-striped table-light">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Amount</th>
+                            <th class="text-center">Product</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Label label in SelectedLabels)
+                        {
+                            <tr>
+                                <td class="text-center">@label.Quantity</td>
+                                <td class="text-center">@label.Product!.Name</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6 col-print-12 p-1">
+            <div class="row" style="min-height: 89vh; max-height: 100vh">
+
+            </div>
+            <div class="row p-1 no-print" style="min-height: 5vh">
+                <Button onclick="window.print()" Color="ButtonColor.Primary">Print Labels</Button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private ICollection<Label> SelectedLabels { get; set; } = [];
+
+    private void AddLabel(Product product)
+    {
+        var existingProduct = SelectedLabels.Where(l => l.Product == product).FirstOrDefault();
+
+        if (existingProduct is not null)
+        {
+            existingProduct.Quantity += 1;
+        }
+        else
+        {
+            SelectedLabels.Add(new()
+            {
+                Quantity = 1,
+                Product = product
+            });
+        }
+        
+    }
+
+    public class Label
+    {
+        public int Quantity { get; set; }
+
+        public Product? Product { get; set; }
+
+    }
+}

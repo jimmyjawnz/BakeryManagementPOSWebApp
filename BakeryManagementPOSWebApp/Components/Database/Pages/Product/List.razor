@@ -26,9 +26,12 @@ else
 				<Button Class="border-0" @onclick="() => OnInfoModal.InvokeAsync(context)" Outline=true Size=ButtonSize.Small Color="ButtonColor.Primary" TooltipTitle="Info"><i class="bi bi-info-circle-fill"></i></Button>
 				@context.Name
 			</GridColumn>
-			<GridColumn TItem="Product" HeaderText="Price" PropertyName="Price" FilterOperator="FilterOperator.GreaterThanOrEquals" FilterTextboxWidth="100">
-				@context.Price.ToString("C2")
-			</GridColumn>
+			@if(!Minimum)
+			{
+				<GridColumn TItem="Product" HeaderText="Price" PropertyName="Price" FilterOperator="FilterOperator.GreaterThanOrEquals" FilterTextboxWidth="100">
+					@context.Price.ToString("C2")
+				</GridColumn>
+			}
 			<GridColumn TItem="Product" HeaderText="Description" PropertyName="Description" Filterable="false">
 				@context.Description
 			</GridColumn>
@@ -50,13 +53,19 @@ else
 					</Button>
 				</HeaderContent>
 				<ChildContent>
-					@if(ShowTrashed)
+					@if (ShowTrashed)
 					{
 						<AuthorizeView Roles="Manager, Admin" Context="auth">
 							<Button @onclick="() => OnRestoreModal.InvokeAsync(context)" Color="ButtonColor.Success" TooltipTitle="Restore"><i class="bi bi-arrow-counterclockwise"></i></Button>
 						</AuthorizeView>
 						<AuthorizeView Roles="Admin" Context="auth">
 							<Button @onclick="() => OnDeleteModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Delete"><i class="bi bi-file-earmark-x"></i></Button>
+						</AuthorizeView>
+					}
+					else if (ShowLabels)
+					{
+						<AuthorizeView Context="auth">
+							<Button @onclick="() => OnSelected.InvokeAsync(context)" Color="ButtonColor.Success" TooltipTitle="Add Label"><i class="bi bi-bookmark-plus-fill"></i></Button>
 						</AuthorizeView>
 					}
 					else
@@ -90,7 +99,16 @@ else
 	public EventCallback<Product> OnRestoreModal { get; set; }
 
 	[Parameter]
+	public EventCallback<Product> OnSelected { get; set; }
+
+	[Parameter]
 	public bool ShowTrashed { get; set; } = false;
+
+	[Parameter]
+	public bool ShowLabels { get; set; } = false;
+
+	[Parameter]
+	public bool Minimum { get; set; } = false;
 
 	private ApplicationDbContext Context = default!;
 
