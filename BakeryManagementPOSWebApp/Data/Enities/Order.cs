@@ -25,7 +25,7 @@ namespace BakeryManagementPOSWebApp.Data.Enities
 
         // Employee who processed
         [Required]
-        [Column("order_processed_by", Order = 3, TypeName = "nvarchar(max)")]
+        [Column("order_processed_by", Order = 3, TypeName = "nvarchar(450)")]
         public string EmployeeID { get; set; } = string.Empty;
         public Employee ProcessedBy { get; set; } = null!;
 
@@ -55,19 +55,19 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         public decimal TotalAmount { get; set; } = 0.00m;
 
         // Order notes
-        [Column("order_notes", Order = 11, TypeName = "nvarchar(max)")]
+        [Column("order_notes", Order = 12, TypeName = "nvarchar(max)")]
         public string? Notes { get; set; }
 
         // Planned pickup date
-        [Column("order_pickup", Order = 10)]
+        [Column("order_pickup", Order = 11)]
         public DateTime? Pickup { get; set; }
 
         // Date Pickedup
-        [Column("order_pickedup", Order = 9)]
+        [Column("order_pickedup", Order = 10)]
         public DateTime? PickedUp { get; set; }
 
         // Date Processed
-        [Column("order_processed", Order = 8)]
+        [Column("order_processed", Order = 9)]
         public DateTime? Processed { get; set; }
 
 

@@ -19,6 +19,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Order>().HasOne(o => o.OrderedBy).WithMany(c => c.Orders).OnDelete(DeleteBehavior.NoAction);
+
         modelBuilder.Entity<Product>()
             .Property(p => p.Created)
             .HasDefaultValueSql("getdate()");

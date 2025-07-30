@@ -26,6 +26,9 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         // Relational value for Employee
         public Employee? Employee { get; set; }
 
+        // Relational value for Orders
+        public ICollection<Order> Orders { get; set; } = [];
+
         [EmailAddress]
         [Column("customer_email", Order = 6, TypeName = "nvarchar(101)")]
         public string? EmailAddress { get; set; }
