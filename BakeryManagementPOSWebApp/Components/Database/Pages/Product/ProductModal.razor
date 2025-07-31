@@ -23,6 +23,15 @@
 				}
 			</h3>
 
+			<AuthorizeView Roles="Admin">
+				<div class="row">
+					<label class="col-md-2 col-form-label">ID: </label>
+					<div class="col-md-4">
+						<input type="text" readonly="" class="form-control-plaintext" value="@SentProduct.Id" />
+					</div>
+				</div>
+			</AuthorizeView>
+
 			<div class="row">
 				<label class="col-md-2 col-form-label">Name: </label>
 				<div class="col-md-4">
@@ -95,7 +104,7 @@ else if (ModalType.Equals(ModalViewType.Update))
 				</div>
 
 				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Price: <span class="text-danger">*</span></label>
+					<label class="col-md-2 col-form-label">Price: </label>
 					<div class="col-md-10">
 						<CurrencyInput TValue="decimal" @bind-Value="@productDT.Price" Placeholder="Enter price" />
 						<ValidationMessage For="() => productDT.Price" />
