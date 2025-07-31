@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BakeryManagementPOSWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250612012709_Init")]
+    [Migration("20250730215536_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -68,7 +68,6 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .HasColumnOrder(5);
 
                     b.Property<DateTime?>("LastUpdated")
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2")
                         .HasColumnName("last_updated");
 
@@ -223,10 +222,11 @@ namespace BakeryManagementPOSWebApp.Migrations
                             EmailConfirmed = true,
                             FirstName = "Admin",
                             FullName = "",
+                            LastName = "",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
                             PasswordHash = "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==",
-                            PhoneNumber = "0",
+                            PhoneNumber = "0000000000",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "c6f3a8ff-a483-4466-b2c6-32313089d489",
                             TwoFactorEnabled = false,
@@ -270,19 +270,18 @@ namespace BakeryManagementPOSWebApp.Migrations
 
                     b.Property<string>("EmployeeID")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("order_processed_by")
                         .HasColumnOrder(3);
 
                     b.Property<DateTime?>("LastUpdated")
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2")
                         .HasColumnName("last_updated");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("order_notes")
-                        .HasColumnOrder(11);
+                        .HasColumnOrder(12);
 
                     b.Property<string>("PaymentType")
                         .IsRequired()
@@ -293,17 +292,17 @@ namespace BakeryManagementPOSWebApp.Migrations
                     b.Property<DateTime?>("PickedUp")
                         .HasColumnType("datetime2")
                         .HasColumnName("order_pickedup")
-                        .HasColumnOrder(9);
+                        .HasColumnOrder(10);
 
                     b.Property<DateTime?>("Pickup")
                         .HasColumnType("datetime2")
                         .HasColumnName("order_pickup")
-                        .HasColumnOrder(10);
+                        .HasColumnOrder(11);
 
                     b.Property<DateTime?>("Processed")
                         .HasColumnType("datetime2")
                         .HasColumnName("order_processed")
-                        .HasColumnOrder(8);
+                        .HasColumnOrder(9);
 
                     b.Property<decimal>("SumOfItems")
                         .HasColumnType("decimal(18,2)")
@@ -344,7 +343,6 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .HasColumnName("deleted");
 
                     b.Property<DateTime?>("LastUpdated")
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2")
                         .HasColumnName("last_updated");
 
@@ -407,7 +405,6 @@ namespace BakeryManagementPOSWebApp.Migrations
                         .HasColumnOrder(1);
 
                     b.Property<DateTime?>("LastUpdated")
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2")
                         .HasColumnName("last_updated");
 
@@ -601,9 +598,9 @@ namespace BakeryManagementPOSWebApp.Migrations
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Order", b =>
                 {
                     b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Customer", "OrderedBy")
-                        .WithMany()
+                        .WithMany("Orders")
                         .HasForeignKey("CustomerID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("BakeryManagementPOSWebApp.Data.Enities.Employee", "ProcessedBy")
@@ -690,6 +687,8 @@ namespace BakeryManagementPOSWebApp.Migrations
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Customer", b =>
                 {
                     b.Navigation("Employee");
+
+                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("BakeryManagementPOSWebApp.Data.Enities.Order", b =>

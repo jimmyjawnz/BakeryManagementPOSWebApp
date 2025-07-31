@@ -245,8 +245,7 @@ namespace BakeryManagementPOSWebApp.Migrations
                         name: "FK_Orders_Customers_order_ordered_by",
                         column: x => x.order_ordered_by,
                         principalTable: "Customers",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "id");
                 });
 
             migrationBuilder.CreateTable(
@@ -292,13 +291,13 @@ namespace BakeryManagementPOSWebApp.Migrations
 
             migrationBuilder.InsertData(
                 table: "Customers",
-                columns: new[] { "id", "deleted", "customer_email", "customer_first_name", "customer_last_name", "customer_phone_number" },
-                values: new object[] { 1, null, null, "ADMIN", "", "0" });
+                columns: new[] { "id", "deleted", "customer_email", "customer_first_name", "customer_last_name", "last_updated", "customer_phone_number" },
+                values: new object[] { 1, null, null, "ADMIN", "", null, "0" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "employee_customer", "deleted", "Email", "EmailConfirmed", "employee_first_name", "employee_last_name", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "employee_phone_number", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "e467e64b-a141-4325-b57b-d267cfd6ccf5", 0, "98646101-9f66-4aea-ad13-5250b5c1ddde", 1, null, null, true, "Admin", null, false, null, null, "ADMIN", "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==", "0", false, "c6f3a8ff-a483-4466-b2c6-32313089d489", false, "ADMIN" });
+                values: new object[] { "e467e64b-a141-4325-b57b-d267cfd6ccf5", 0, "98646101-9f66-4aea-ad13-5250b5c1ddde", 1, null, null, true, "Admin", "", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==", "0000000000", false, "c6f3a8ff-a483-4466-b2c6-32313089d489", false, "ADMIN" });
 
             migrationBuilder.InsertData(
                 table: "AspNetUserRoles",
