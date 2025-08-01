@@ -1,0 +1,531 @@
+﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@inject UserManager<Employee> UserManager
+@inject IUserStore<Employee> UserStore
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+
+@if (ModalType.Equals(ModalViewType.Get))
+{
+	<Modal @ref="modalRef" Title="Employee Information"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<h3>
+				@SentEmployee.FullName
+				<span class="float-end">@SentEmployee.PhoneNumber</span>
+			</h3>
+
+			<AuthorizeView Roles="Admin">
+				<div class="row">
+					<label class="col-md-2 col-form-label">ID: </label>
+					<div class="col-md-4">
+						<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.Id" />
+					</div>
+				</div>
+			</AuthorizeView>
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Firstname: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.FirstName" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Lastname: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.LastName" />
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Phone Number: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.PhoneNumber" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Email: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.Email" />
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Created: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.DateCreated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Last Updated: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.DateUpdated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Deleted: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentEmployee.DateDeleted" />
+				</div>
+			</div>
+
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Update))
+{
+	<Modal @ref="modalRef" Title="@("Edit - " + SentEmployee.FullName)"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="EditEmployee" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Phone number: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.PhoneNumber" Placeholder="000 000-000" />
+						<ValidationMessage For="() => employeeDT.PhoneNumber" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Firstname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.FirstName" Placeholder="Enter firstname" />
+						<ValidationMessage For="() => employeeDT.FirstName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Lastname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.LastName" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => employeeDT.LastName" />
+					</div>
+				</div>
+
+				<AuthorizeView Roles="Admin" Context="authContext">
+					<div class="form-group row mb-2">
+						<label class="col-md-2 col-form-label">Update Password: </label>
+						<div class="col-md-10">
+							<TextInput @bind-Value="@Password" Placeholder="Enter user password" />
+							<small class="form-text text-muted">If left empty password will not change.</small>
+							<ValidationMessage For="() => Password" />
+						</div>
+					</div>
+				</AuthorizeView>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Employee Role: </label>
+					<div class="col-md-10">
+						<AuthorizeView>
+							<Authorized Context="authContext">
+								<InputSelect class="form-select" @bind-Value="@Role">
+									@if (authContext.User.IsInRole("Admin"))
+									{
+										<option value="Admin">Admin</option>
+										<option value="Manager">Manager</option>
+										<option value="Employee">Employee</option>
+									}
+									else if (authContext.User.IsInRole("Manager") && Role == "Employee")
+									{
+										<option disabled value="Admin">Admin</option>
+										<option disabled value="Manager">Manager</option>
+										<option value="Employee">Employee</option>
+									}
+									else
+									{
+										<option disabled value="Admin">Admin</option>
+										<option disabled value="Manager">Manager</option>
+										<option disabled value="Employee">Employee</option>
+									}
+								</InputSelect>
+							</Authorized>
+						</AuthorizeView>
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Save Changes</Button>
+					</div>
+				</div>
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+else 
+{
+	<Modal @ref="modalRef" Title="New Employee"
+			UseStaticBackdrop="true"
+			CloseOnEscape="false"
+			IsVerticallyCentered="true"
+			Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="AddEmployee" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Phone number: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.PhoneNumber" Placeholder="000 000-000" />
+						<ValidationMessage For="() => employeeDT.PhoneNumber" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Firstname: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.FirstName" Placeholder="Enter firstname" />
+						<ValidationMessage For="() => employeeDT.FirstName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Lastname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@employeeDT.LastName" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => employeeDT.LastName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Password: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@Password" Placeholder="Enter user password" />
+						<small class="form-text text-muted">The employee will use this password to login.</small>
+						<ValidationMessage For="() => Password" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Employee Role: </label>
+					<div class="col-md-10">
+						<AuthorizeView>
+							<Authorized Context="authContext">
+								<InputSelect class="form-select" @bind-Value="@Role">
+									@if (authContext.User.IsInRole("Admin"))
+									{
+										<option value="Admin">Admin</option>
+										<option value="Manager">Manager</option>
+									}
+									<option value="Employee">Employee</option>
+								</InputSelect>
+							</Authorized>
+						</AuthorizeView>
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Create</Button>
+					</div>
+				</div>
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+
+
+@code {
+	[Parameter]
+	public ModalViewType ModalType { get; set; }
+
+	[Parameter]
+	public Employee SentEmployee { get; set; } = new();
+
+	[Parameter]
+	public EventCallback OnSubmit { get; set; }
+
+	private EditContext editContext { get; set; } = default!;
+	private EmployeeDT employeeDT { get; set; } = new();
+
+	[Required]
+	[StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+	[DataType(DataType.Password)]
+	[Display(Name = "Password")]
+	private string Password { get; set; } = string.Empty;
+
+	private string Role { get; set; } = "Employee";
+
+
+
+	public Modal modalRef { get; set; } = default!;
+	private Button submitButton { get; set; } = default!;
+
+	private List<ToastMessage> ToastMessages = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		editContext = new(employeeDT);
+	}
+
+	public async Task SubmitForm()
+	{
+		var context = DbFactory.CreateDbContext();
+
+
+		// Get customer with the same PhoneNumber
+		Customer? linkedCustomer = context.Customers.Where(c => c.PhoneNumber == employeeDT.PhoneNumber).FirstOrDefault();
+
+		// If no match then Create a new Customer
+		// else update current one
+		if (linkedCustomer is null)
+		{
+			linkedCustomer = new Customer()
+			{
+				FirstName = employeeDT.FirstName,
+				LastName = employeeDT.LastName,
+				PhoneNumber = employeeDT.PhoneNumber,
+				EmailAddress = employeeDT.Email
+			};
+
+			context.Customers.Add(linkedCustomer);
+			context.SaveChanges();
+		}
+		else
+		{
+			linkedCustomer.FirstName = employeeDT.FirstName;
+			linkedCustomer.LastName = employeeDT.LastName;
+			linkedCustomer.EmailAddress = employeeDT.Email;
+			linkedCustomer.LastUpdated = DateTime.Now;
+
+			context.Customers.Update(linkedCustomer);
+		}
+
+		// Create or Update Employee
+		if (ModalType.Equals(ModalViewType.Update))
+		{
+			submitButton.ShowLoading("Updating...");
+
+			// Get employee db object
+			Employee employee = await context.Employees.Where(e => e.Id == SentEmployee.Id).FirstAsync();
+
+			// Remove current roles and add new selection
+			await UserManager.RemoveFromRolesAsync(employee, ["Employee", "Manager", "Admin"]);
+
+			var roles = context.UserRoles.Where(ur => ur.UserId == employee.Id);
+			context.UserRoles.RemoveRange(roles);
+
+			IdentityRole role = context.Roles.Where(r => r.Name == Role).First();
+
+			context.UserRoles.Add(new()
+				{
+					RoleId = role.Id,
+					UserId = employee.Id
+				});
+
+			// Update employee object values
+			employee.FirstName = employeeDT.FirstName;
+			employee.LastName = employeeDT.LastName;
+			employee.FullName = employeeDT.FirstName + " " + employeeDT.LastName;
+			employee.PhoneNumber = employeeDT.PhoneNumber;
+			employee.Email = employeeDT.Email;
+			employee.CustomerId = employeeDT.CustomerId;
+			employee.LastUpdated = DateTime.Now;
+			employee.UserName = employee.FullName.Replace(" ", "");
+			employee.NormalizedUserName = employee.FullName.Replace(" ", "").ToUpper();
+
+			// If password was entered, update it
+			if (!String.IsNullOrEmpty(Password))
+			{
+				employee.PasswordHash = UserManager.PasswordHasher.HashPassword(employee, Password);
+			}
+
+			context.Employees.Update(employee);
+		}
+		else
+		{
+			submitButton.ShowLoading("Creating...");
+
+			// Create employee object
+			Employee employee = new Employee()
+			{
+				FirstName = employeeDT.FirstName,
+				LastName = employeeDT.LastName,
+				FullName = employeeDT.FirstName + " " + employeeDT.LastName,
+				PhoneNumber = employeeDT.PhoneNumber,
+				Email = employeeDT.Email,
+				CustomerId = linkedCustomer.Id
+			};
+
+			// Set Username
+			await UserStore.SetUserNameAsync(employee, employee.FullName.Replace(" ", ""), CancellationToken.None);
+
+			// Confirm Email Token
+			var code = await UserManager.GenerateEmailConfirmationTokenAsync(employee);
+			await UserManager.ConfirmEmailAsync(employee, code);
+
+			// Create User with Password
+			var result = await UserManager.CreateAsync(employee, Password).ConfigureAwait(false);
+
+			if (!result.Succeeded)
+			{
+				Console.WriteLine($"Error: {string.Join(", ", result.Errors.Select(error => error.Description))}");
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						result.Errors.Select(error => error.Description)
+					</div>
+				});
+			}
+
+			// Add role to user
+			await UserManager.AddToRoleAsync(employee, Role);
+		}
+
+		try
+		{
+
+			await context.SaveChangesAsync();
+			await context.DisposeAsync();
+
+			await InvokeAsync(async () => 
+			{ 
+				submitButton.HideLoading();
+				await OnSubmit.InvokeAsync();
+				await Hide();
+			});
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!EmployeeExists(SentEmployee.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Employee is no longer in the database.
+					</div>
+				});
+				Console.WriteLine("ERROR -> Unable to Update: " + SentEmployee.Id + " Employee is no longer in the database.");
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						@ex.Message
+					</div>
+				});
+				Console.ForegroundColor = ConsoleColor.DarkRed;
+				Console.WriteLine("ERROR -> Unable to Update: " + SentEmployee.Id);
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+		}
+
+
+		if (ModalType.Equals(ModalViewType.Update))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Success,
+				IconName = IconName.CheckCircle,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+					Employee <strong>@employeeDT.PhoneNumber</strong> Updated!
+				</div>
+			});
+		}
+		else
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Success,
+				IconName = IconName.CheckCircle,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+					Employee <strong>@employeeDT.PhoneNumber</strong> Created!
+				</div>
+			});
+		}
+	}
+
+	private bool EmployeeExists(string id)
+	{
+		using var context = DbFactory.CreateDbContext();
+		return context.Employees.Any(e => e.Id == id);
+	}
+
+	public async Task Show(Employee employee)
+	{
+		SentEmployee = employee;
+		var role = await UserManager.GetRolesAsync(employee);
+		Role = role.First();
+
+		employeeDT = new()
+		{
+			FirstName = employee.FirstName,
+			LastName = employee.LastName,
+			PhoneNumber = employee.PhoneNumber,
+			Email = employee.Email,
+			CustomerId = employee.CustomerId
+		};
+
+		editContext = new(employeeDT);
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Show()
+	{
+		Password = string.Empty;
+		employeeDT = new();
+		editContext = new(employeeDT);
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Hide()
+	{
+		Password = string.Empty;
+		await modalRef.HideAsync();
+	}
+
+	public class EmployeeDT
+	{
+		[Required(ErrorMessage = "Firstname is required.")]
+		[StringLength(50, ErrorMessage = "Firstname is too long.")]
+		public string FirstName { get; set; } = string.Empty;
+
+		[StringLength(50, ErrorMessage = "Lastname is too long.")]
+		public string? LastName { get; set; } = string.Empty;
+
+		[Phone(ErrorMessage = "Phone number is not the correct format.")]
+		[Required(ErrorMessage = "Phone number is required.")]
+		[StringLength(15, ErrorMessage = "Phone number is not the correct format.")]
+		public string PhoneNumber { get; set; } = string.Empty;
+
+		public string? Email { get; set; } = string.Empty;
+
+		public int CustomerId { get; set; }
+		public Customer Customer { get; set; } = null!;
+	}
+}

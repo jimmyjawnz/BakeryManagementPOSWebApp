@@ -1,5 +1,5 @@
 ﻿@page "/db/employees"
-
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Employee
 @attribute [Authorize]
 
 <PageTitle>Employees</PageTitle>
@@ -7,324 +7,78 @@
 <h2>Employees</h2>
 
 @inject NavigationManager NavigationManager
-@inject EmployeeService Service
-@inject UserManager<Employee> UserManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
 <TrashModal @ref="trashModal"
-	ObjectName="@(employee.FullName + " (" + Role + ")")"
+			ObjectName="@employee.FullName"
 			SubmitMethod="SubmitRemoval" />
 
-<Modal @ref="employeeModal" Title="@ModalTitle"
-	   UseStaticBackdrop="true"
-	   CloseOnEscape="false"
-	   IsVerticallyCentered="true"
-	   Size="ModalSize.ExtraLarge">
-	<BodyTemplate>
+<EmployeeModal @ref="employeeInfoModal"
+			  ModalType="ModalViewType.Get" />
 
-		@if (ModalTitle.Contains("Information"))
-		{
-			<h3>@employee.FullName (@Role)</h3>
+<EmployeeModal @ref="employeeEditModal"
+			  ModalType="ModalViewType.Update"
+			  OnSubmit="() => employeeList.RefreshData(false)" />
 
-			<AuthorizeView Roles="Manager, Admin">
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">ID: </label>
-					<div class="col-md-10">
-						<input class="form-control-plaintext" readonly="" value="@employee.Id" />
-					</div>
-				</div>
-			</AuthorizeView>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Date Created: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.DateCreated" />
-				</div>
-			</div>
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Last Updated: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.DateUpdated" />
-				</div>
-			</div>
-
-			<hr />
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Phone number: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.PhoneNumber" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">First Name: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.FirstName" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Last Name: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.LastName" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Email: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@employee.Email" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Employee Role: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@Role" />
-				</div>
-			</div>
-
-			<div class="form-group row">
-				<div class="col-md-12">
-					<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
-				</div>
-			</div>
-		}
-		else 
-		{
-			<EditForm EditContext="editContext" FormName="AddEmployee" OnValidSubmit="SubmitForm">
-				<DataAnnotationsValidator />
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Phone number: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@employee.PhoneNumber" Placeholder="000 000-000" />
-						<ValidationMessage For="() => employee.PhoneNumber" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">First Name: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@employee.FirstName" Placeholder="Enter first name" />
-						<ValidationMessage For="() => employee.FirstName" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Last Name: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@employee.LastName" Placeholder="Enter last name" />
-						<ValidationMessage For="() => employee.LastName" />
-					</div>
-				</div>
-
-				@if (ModalTitle.Contains("Add"))
-				{
-					<div class="form-group row mb-2">
-						<label class="col-md-2 col-form-label">Password: <span class="text-danger">*</span></label>
-						<div class="col-md-10">
-							<TextInput @bind-Value="@Password" Placeholder="Enter user password" />
-							<small class="form-text text-muted">The employee will use this password to login.</small>
-							<ValidationMessage For="() => Password" />
-						</div>
-					</div>
-				}
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Employee Role: </label>
-					<div class="col-md-10">
-						<AuthorizeView>
-							<Authorized Context="authContext">
-								<InputSelect class="form-select" @bind-Value="@Role">
-									@if(authContext.User.IsInRole("Admin")) {
-										<option value="Admin">Admin</option>
-										<option value="Manager">Manager</option>
-									}
-									<option value="Employee">Employee</option>
-								</InputSelect>
-							</Authorized>
-						</AuthorizeView>
-						
-					</div>
-				</div>
-
-				<div class="form-group row mt-3">
-					<div class="col-md-12">
-						<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
-						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">@ModalTitle</Button>
-					</div>
-				</div>
-			</EditForm>
-		}
-	</BodyTemplate>
-</Modal>
+<EmployeeModal @ref="employeeCreateModal"
+			  ModalType="ModalViewType.Create"
+			  OnSubmit="() => employeeList.RefreshData(false)" />
 
 <AuthorizeView Roles="Manager, Admin">
-	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Employee</Button>
+	<Button @onclick="employeeCreateModal.Show" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Employee</Button>
 	<Button To="db/employees/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
-@if (employees is null)
-{
-	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
-}
-else 
-{
-	<table class="table table-striped table-hover">
-		<thead>
-			<tr>
-				<th width="30%">Name</th>
-				<th width="30%">Phone Number</th>
-				<th width="30%">Email</th>
-				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
-			</tr>
-		</thead>
-		<tbody class="table-group-divider">
-			@if (employees.Count == 0)
-			{
-				<tr>
-					<td colspan="4" class="text-center">
-						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing employees found in database." />
-					</td>
-				</tr>
-			}
-			@foreach (var item in employees)
-			{
-				@if (item.DateDeleted is null)
-				{
-					<tr @ondblclick="(() => ShowInfoModal(item))">
-						<td>@item.FullName</td>
-						<td>@item.PhoneNumber</td>
-						<td>@item.Email</td>
-						<td class="text-center">
-							<AuthorizeView Roles="Admin">
-								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-							</AuthorizeView>
-						</td>
-					</tr>
-				}
-			}
-		</tbody>
-	</table>
-}
+<List @ref="employeeList"
+	  OnEditModal="(employee) => employeeEditModal.Show(employee)"
+	  OnRemoveModal="(employee) => ShowRemoveModal(employee)"
+	  OnInfoModal="(employee) => employeeInfoModal.Show(employee)" />
 
 
 @code {
+	private ApplicationDbContext? Context { get; set; }
+
 	private TrashModal trashModal { get; set; } = default!;
 
-	private Modal employeeModal { get; set; } = default!;
-	private string ModalTitle { get; set; } = string.Empty;
+	private List employeeList { get; set; } = default!;
 
-	private EditContext editContext { get; set; } = default!;
-	private Employee employee { get; set; } = new();
+	private EmployeeModal employeeInfoModal { get; set; } = default!;
+	private EmployeeModal employeeEditModal { get; set; } = default!;
+	private EmployeeModal employeeCreateModal { get; set; } = default!;
 
-	private List<Employee>? employees { get; set; } = new();
-	private Button RefreshButton { get; set; } = default!;
+	private Data.Enities.Employee employee { get; set; } = new();
 
-	private Button submitButton { get; set; } = default!;
-
-	[Required]
-	[StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-	[DataType(DataType.Password)]
-	[Display(Name = "Password")]
-	private string Password { get; set; } = string.Empty;
-
-	private string Role { get; set; } = "Employee";
-
-	protected override async Task OnInitializedAsync()
-	{
-		await LoadData();
-	}
-
-	public async Task LoadData()
-	{
-		employees = null;
-		await Task.Delay(10);
-		employees = await Service.GetExistingEmployees();
-	}
-
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
-	}
-
-	[Authorize(Roles = "Admin")]
-	private async Task ShowRemoveModal(Employee item)
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRemoveModal(Data.Enities.Employee item)
 	{
 		employee = item;
 		await trashModal.Show();
 	}
 
-	[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
-		await Service.SoftDeleteEmployee(employee);
-		await LoadData();
+		Context = DbFactory.CreateDbContext();
+		employee.Deleted = DateTime.Now;
+
+		Context.Employees.Update(employee);
+		await Context.SaveChangesAsync();
+		Context.Dispose();
+
+		await employeeList.RefreshData(false);
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitForm()
+	private async Task ShowEditModal(Data.Enities.Employee item)
 	{
-		int? result = null;
-		submitButton.ShowLoading("Loading...");
-
-		if (ModalTitle.Contains("Add"))
-		{
-			result = await Service.CreateEmployee(employee, Password, Role);
-		}
-		else if (ModalTitle.Contains("Edit"))
-		{
-			result = await Service.UpdateEmployee(employee, Role);
-		}
-
-		if (result is null)
-		{
-			submitButton.HideLoading();
-			return;
-		}
-
-		await LoadData();
-		await HideModal();
-		submitButton.HideLoading();
+		await employeeEditModal.Show(item);
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowAddModal()
+	private async Task ShowInfoModal(Data.Enities.Employee item)
 	{
-		employee = new();
-		Password = string.Empty;
-		Role = "Employee";
-		ModalTitle = "Add Employee";
-		editContext = new EditContext(employee);
-		await employeeModal.ShowAsync();
-	}
-
-	[Authorize(Roles = "Admin")]
-	private async Task ShowEditModal(Employee item)
-	{
-		employee = item;
-		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
-		Role = role[0];
-		ModalTitle = "Edit Employee - " + employee.PhoneNumber;
-		editContext = new EditContext(employee);
-		await employeeModal.ShowAsync();
-	}
-
-	private async Task ShowInfoModal(Employee item)
-	{
-		employee = await Service.GetEmployee(item.Id);
-		var role = await UserManager.GetRolesAsync(employee).ConfigureAwait(false);
-		Role = role[0];
-		ModalTitle = "Employee Information";
-		await employeeModal.ShowAsync();
-	}
-
-	private async Task HideModal()
-	{
-		await employeeModal.HideAsync();
+		await employeeInfoModal.Show(item);
 	}
 }

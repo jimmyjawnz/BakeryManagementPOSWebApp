@@ -1,14 +1,15 @@
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using BakeryManagementPOSWebApp.Components;
 using BakeryManagementPOSWebApp.Components.Account;
 using BakeryManagementPOSWebApp.Data;
 using BakeryManagementPOSWebApp.Data.Enities;
-using BakeryManagementPOSWebApp.Services.Products;
 using BakeryManagementPOSWebApp.Services.Customers;
 using BakeryManagementPOSWebApp.Services.Employees;
 using BakeryManagementPOSWebApp.Services.Orders;
+using BakeryManagementPOSWebApp.Services.Products;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 static void consoleMessage(string message)
 {
@@ -90,6 +91,35 @@ using (var serviceScope = app.Services.GetService<IServiceScopeFactory>().Create
         consoleMessage("[s] - DB Migration Start");
 
         context.Database.Migrate();
+
+        var hasADMIN = context.Employees.Where(e => e.Id == "e467e64b-a141-4325-b57b-d267cfd6ccf5").FirstOrDefault();
+
+        if (hasADMIN is null)
+        {
+            context.Employees.Add(new Employee
+            {
+                Id = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
+                FirstName = "ADMIN",
+                LastName = "",
+                EmailConfirmed = true,
+                PasswordHash = "AQAAAAIAAYagAAAAENAdq/abuUcgZqOn4SAT/IDK01N3WDWnQOMJAB+aEccSNjPJgeDWB4E07bVhWPGovw==",
+                UserName = "ADMIN",
+                NormalizedUserName = "ADMIN",
+                SecurityStamp = "c6f3a8ff-a483-4466-b2c6-32313089d489",
+                ConcurrencyStamp = "98646101-9f66-4aea-ad13-5250b5c1ddde",
+                Created = DateTime.Parse("0001-01-01"),
+                PhoneNumber = "0000000000",
+                CustomerId = 1
+            });
+
+            context.UserRoles.Add(new IdentityUserRole<string>
+            {
+                UserId = "e467e64b-a141-4325-b57b-d267cfd6ccf5",
+                RoleId = "1e348a66-f22c-48fa-9494-e422b79eea62"
+            });
+        }
+
+        context.SaveChanges();
 
         consoleMessage("[s] - DB Migration Finished. DB is up to date!");
     }

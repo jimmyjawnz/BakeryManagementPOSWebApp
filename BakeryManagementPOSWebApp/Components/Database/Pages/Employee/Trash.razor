@@ -1,0 +1,109 @@
+﻿@page "/db/employees/trash"
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Employee
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+<PageTitle>Employee Trash</PageTitle>
+<title>Employee Trash</title>
+<h2>Employee Trash</h2>
+
+@inject NavigationManager NavigationManager
+@inject EmployeeService Service
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<TrashModal @ref="deleteModal"
+	ObjectName="@employee.FullName"
+			SubmitMethod="SubmitRemoval"
+			Text="This item will be deleted permanently!"
+			Type="delete"/>
+
+<TrashModal @ref="restoreModal"
+			ObjectName="@employee.FullName"
+			SubmitMethod="SubmitRestore"
+			Text="This item will be restored and moved out of trash."
+			Type="restore"/>
+
+<EmployeeModal @ref="employeeModal"
+			  ModalType="ModalViewType.Get"/>
+
+<Button To="db/employees" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Employees</Button>
+
+@if (employees is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	<List @ref="employeeList"
+		ShowTrashed=true
+		  OnDeleteModal="(employee) => ShowRemoveModal(employee)"
+		  OnRestoreModal="(employee) => ShowRestoreModal(employee)"
+		  OnInfoModal="(employee) => ShowInfoModal(employee)" />
+}
+
+
+@code {
+	private TrashModal deleteModal { get; set; } = default!;
+	private TrashModal restoreModal { get; set; } = default!;
+
+	private List employeeList { get; set; } = default!;
+
+	private EmployeeModal employeeModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
+
+	private EditContext editContext { get; set; } = default!;
+	private Data.Enities.Employee employee { get; set; } = new();
+
+	private List<Data.Enities.Employee>? employees { get; set; } = new();
+	private Button RefreshButton { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	public async Task LoadData()
+	{
+		await employeeList.RefreshData(true);
+	}
+
+	private void RefreshData()
+	{
+		NavigationManager.Refresh(true);
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRemoveModal(Data.Enities.Employee item)
+	{
+		employee = item;
+		await deleteModal.Show();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitRemoval()
+	{
+		await Service.HardDeleteEmployee(employee);
+		await LoadData();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRestoreModal(Data.Enities.Employee item)
+	{
+		employee = item;
+		await restoreModal.Show();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitRestore()
+	{
+		await Service.RecoverEmployee(employee);
+		await LoadData();
+	}
+
+	private async Task ShowInfoModal(Data.Enities.Employee item)
+	{
+		await employeeModal.Show(item);
+	}
+
+	private async Task HideModal()
+	{
+		await employeeModal.Hide();
+	}
+}
