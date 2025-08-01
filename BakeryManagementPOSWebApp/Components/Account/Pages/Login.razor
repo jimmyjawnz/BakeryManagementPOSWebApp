@@ -74,7 +74,7 @@
 
     public async Task LoginUser()
     {
-        var employee = Context.Employees.Where(p => p.FullName == Input.FullName.ToLower().Replace(" ", "")).FirstOrDefaultAsync();
+        var employee = Context.Employees.Where(p => p.NormalizedUserName == Input.FullName.ToUpper().Replace(" ", "")).FirstOrDefaultAsync();
 
         if (employee.Result is null || employee.Result.Deleted is not null)
         {
