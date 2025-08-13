@@ -1,0 +1,109 @@
+﻿@page "/db/products/trash"
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Product
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+<PageTitle>Product Trash</PageTitle>
+<title>Product Trash</title>
+<h2>Product Trash</h2>
+
+@inject NavigationManager NavigationManager
+@inject ProductService Service
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<TrashModal @ref="deleteModal"
+	ObjectName="@product.Name"
+			SubmitMethod="SubmitRemoval"
+			Text="This item will be deleted permanently!"
+			Type="delete"/>
+
+<TrashModal @ref="restoreModal"
+	ObjectName="@product.Name"
+			SubmitMethod="SubmitRestore"
+			Text="This item will be restored and moved out of trash."
+			Type="restore"/>
+
+<ProductModal @ref="productModal"
+			  ModalType="ModalViewType.Get"/>
+
+<Button To="db/products" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Products</Button>
+
+@if (products is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	<ProductList @ref="productList"
+		ShowTrashed=true
+		  OnDeleteModal="(product) => ShowRemoveModal(product)"
+		  OnRestoreModal="(product) => ShowRestoreModal(product)"
+		  OnInfoModal="(product) => ShowInfoModal(product)" />
+}
+
+
+@code {
+	private TrashModal deleteModal { get; set; } = default!;
+	private TrashModal restoreModal { get; set; } = default!;
+
+	private ProductList productList { get; set; } = default!;
+
+	private ProductModal productModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
+
+	private EditContext editContext { get; set; } = default!;
+	private Data.Enities.Product product { get; set; } = new();
+
+	private List<Data.Enities.Product>? products { get; set; } = new();
+	private Button RefreshButton { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	public async Task LoadData()
+	{
+		await productList.RefreshData(true);
+	}
+
+	private void RefreshData()
+	{
+		NavigationManager.Refresh(true);
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRemoveModal(Data.Enities.Product item)
+	{
+		product = item;
+		await deleteModal.Show();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitRemoval()
+	{
+		await Service.HardDeleteProduct(product);
+		await LoadData();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRestoreModal(Data.Enities.Product item)
+	{
+		product = item;
+		await restoreModal.Show();
+	}
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task SubmitRestore()
+	{
+		await Service.RecoverProduct(product);
+		await LoadData();
+	}
+
+	private async Task ShowInfoModal(Data.Enities.Product item)
+	{
+		await productModal.Show(item);
+	}
+
+	private async Task HideModal()
+	{
+		await productModal.Hide();
+	}
+}

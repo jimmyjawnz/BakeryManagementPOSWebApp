@@ -1,0 +1,135 @@
+﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<Toasts class="p-3" Style="margin-top: 80px;" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+
+@if (customers is null)
+{
+	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
+}
+else 
+{
+	<Grid TItem="Customer"
+		  Class="table table-hover table-striped table-sm"
+		  DataProvider="CustomersDataProvider"
+		  AllowFiltering="true"
+		  Responsive="true"
+		  AllowRowClick="true"
+		  OnRowDoubleClick="(args) => OnInfoModal.InvokeAsync(args.Item)"
+		  FiltersRowCssClass="bg-secondary bg-opacity-25 border-bottom-0"
+		  HeaderRowCssClass="">
+
+		<GridColumns>
+			<GridColumn TItem="Customer" HeaderText="Fullname" PropertyName="FullName" FilterTextboxWidth="100">
+				<Button Class="border-0" @onclick="() => OnInfoModal.InvokeAsync(context)" Outline=true Size=ButtonSize.Small Color="ButtonColor.Primary" TooltipTitle="Info"><i class="bi bi-info-circle-fill"></i></Button>
+				@context.FullName
+			</GridColumn>
+			<GridColumn TItem="Customer" HeaderText="Phone Number" PropertyName="PhoneNumber" FilterTextboxWidth="100">
+				@context.PhoneNumber
+			</GridColumn>
+			<GridColumn TItem="Customer" HeaderText="Email" PropertyName="EmailAddress" FilterTextboxWidth="100">
+				@context.EmailAddress
+			</GridColumn>
+			<GridColumn TItem="Customer" HeaderText="" Filterable=false Class="text-center">
+				<HeaderContent>
+					<Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">
+						<Icon Name="IconName.ArrowClockwise" class="me-1"></Icon>
+						Refresh
+					</Button>
+				</HeaderContent>
+				<ChildContent>
+					@if(ShowTrashed)
+					{
+						<AuthorizeView Roles="Manager, Admin" Context="auth">
+							<Button @onclick="() => OnRestoreModal.InvokeAsync(context)" Color="ButtonColor.Success" TooltipTitle="Restore"><i class="bi bi-arrow-counterclockwise"></i></Button>
+						</AuthorizeView>
+						<AuthorizeView Roles="Admin" Context="auth">
+							<Button @onclick="() => OnDeleteModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Delete"><i class="bi bi-file-earmark-x"></i></Button>
+						</AuthorizeView>
+					}
+					else
+					{
+						<AuthorizeView Roles="Manager, Admin" Context="auth">
+							<Button @onclick="() => OnEditModal.InvokeAsync(context)" Color="ButtonColor.Info" TooltipTitle="Edit"><i class="bi bi-pencil-square"></i></Button>
+							<Button @onclick="() => OnRemoveModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Trash"><i class="bi bi-trash"></i></Button>
+						</AuthorizeView>
+					}
+				</ChildContent>
+			</GridColumn>
+		</GridColumns>
+
+	</Grid>
+}
+
+@code {
+	[Parameter]
+	public EventCallback<Customer> OnEditModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Customer> OnRemoveModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Customer> OnInfoModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Customer> OnDeleteModal { get; set; }
+
+	[Parameter]
+	public EventCallback<Customer> OnRestoreModal { get; set; }
+
+	[Parameter]
+	public bool ShowTrashed { get; set; } = false;
+
+	private ApplicationDbContext Context = default!;
+
+	private List<Customer>? customers { get; set; } = null;
+
+	private List<ToastMessage> ToastMessages = new();
+
+	private async Task<GridDataProviderResult<Customer>> CustomersDataProvider(GridDataProviderRequest<Customer> request)
+	{
+		if (customers is null)
+			await LoadData();
+
+		return await Task.FromResult(request.ApplyTo(customers!));
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadData();
+	}
+
+	private async Task LoadData()
+	{
+		Context = DbFactory.CreateDbContext();
+		if (ShowTrashed)
+		{
+			customers = await Context.Customers.Where(p => p.Deleted != null).ToListAsync();
+		}
+		else
+		{
+			customers = await Context.Customers.Where(p => p.Deleted == null).ToListAsync();
+		}
+		Context.Dispose();
+	}
+
+	public async Task RefreshData(bool showToast)
+	{
+		customers = null;
+		await LoadData();
+
+		if (showToast)
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Info,
+					IconName = IconName.ArrowClockwise,
+					Content =@<div class="text-white">
+							<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
+							Customers Refreshed!
+						   </div>
+				}
+			);
+	}
+}
