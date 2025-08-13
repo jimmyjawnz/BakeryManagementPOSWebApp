@@ -3,17 +3,17 @@
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+<Toasts class="p-3" Style="margin-top: 80px;" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
 
-@if (products is null)
+@if (Employees is null)
 {
 	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
 }
 else 
 {
-	<Grid TItem="Product"
+	<Grid TItem="Employee"
 		  Class="table table-hover table-striped table-sm"
-		  DataProvider="ProductsDataProvider"
+		  DataProvider="EmployeesDataProvider"
 		  AllowFiltering="true"
 		  Responsive="true"
 		  AllowRowClick="true"
@@ -22,27 +22,17 @@ else
 		  HeaderRowCssClass="">
 
 		<GridColumns>
-			<GridColumn TItem="Product" HeaderText="Name" PropertyName="Name" FilterTextboxWidth="100">
+			<GridColumn TItem="Employee" HeaderText="Fullname" PropertyName="FullName" FilterTextboxWidth="100">
 				<Button Class="border-0" @onclick="() => OnInfoModal.InvokeAsync(context)" Outline=true Size=ButtonSize.Small Color="ButtonColor.Primary" TooltipTitle="Info"><i class="bi bi-info-circle-fill"></i></Button>
-				@context.Name
+				@context.FullName
 			</GridColumn>
-			<GridColumn TItem="Product" HeaderText="Price" PropertyName="Price" FilterOperator="FilterOperator.GreaterThanOrEquals" FilterTextboxWidth="100">
-				@context.Price.ToString("C2")
+			<GridColumn TItem="Employee" HeaderText="Phone Number" PropertyName="PhoneNumber" FilterTextboxWidth="100">
+				@context.PhoneNumber
 			</GridColumn>
-			<GridColumn TItem="Product" HeaderText="Description" PropertyName="Description" Filterable="false">
-				@context.Description
+			<GridColumn TItem="Employee" HeaderText="Email" PropertyName="Email" FilterTextboxWidth="100">
+				@context.Email
 			</GridColumn>
-			<GridColumn TItem="Product" HeaderText="Available" PropertyName="IsAvailable" Class="text-center">
-				@if (context.IsAvailable)
-				{
-					<strong class="text-success"><i class="bi bi-check-lg"></i> Yes</strong>
-				}
-				else
-				{
-					<strong class="text-danger"><i class="bi bi-x-lg"></i> No</strong>
-				}
-			</GridColumn>
-			<GridColumn TItem="Product" HeaderText="" Filterable=false Class="text-center">
+			<GridColumn TItem="Employee" HeaderText="" Filterable=false Class="text-center">
 				<HeaderContent>
 					<Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">
 						<Icon Name="IconName.ArrowClockwise" class="me-1"></Icon>
@@ -63,6 +53,8 @@ else
 					{
 						<AuthorizeView Roles="Manager, Admin" Context="auth">
 							<Button @onclick="() => OnEditModal.InvokeAsync(context)" Color="ButtonColor.Info" TooltipTitle="Edit"><i class="bi bi-pencil-square"></i></Button>
+						</AuthorizeView>
+						<AuthorizeView Roles="Admin" Context="auth">
 							<Button @onclick="() => OnRemoveModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Trash"><i class="bi bi-trash"></i></Button>
 						</AuthorizeView>
 					}
@@ -75,35 +67,35 @@ else
 
 @code {
 	[Parameter]
-	public EventCallback<Product> OnEditModal { get; set; }
+	public EventCallback<Employee> OnEditModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Product> OnRemoveModal { get; set; }
+	public EventCallback<Employee> OnRemoveModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Product> OnInfoModal { get; set; }
+	public EventCallback<Employee> OnInfoModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Product> OnDeleteModal { get; set; }
+	public EventCallback<Employee> OnDeleteModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Product> OnRestoreModal { get; set; }
+	public EventCallback<Employee> OnRestoreModal { get; set; }
 
 	[Parameter]
 	public bool ShowTrashed { get; set; } = false;
 
 	private ApplicationDbContext Context = default!;
 
-	private List<Product>? products { get; set; } = null;
+	private List<Employee>? Employees { get; set; } = null;
 
 	private List<ToastMessage> ToastMessages = new();
 
-	private async Task<GridDataProviderResult<Product>> ProductsDataProvider(GridDataProviderRequest<Product> request)
+	private async Task<GridDataProviderResult<Employee>> EmployeesDataProvider(GridDataProviderRequest<Employee> request)
 	{
-		if (products is null)
+		if (Employees is null)
 			await LoadData();
 
-		return await Task.FromResult(request.ApplyTo(products!));
+		return await Task.FromResult(request.ApplyTo(Employees!));
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -116,18 +108,18 @@ else
 		Context = DbFactory.CreateDbContext();
 		if (ShowTrashed)
 		{
-			products = await Context.Products.Where(p => p.Deleted != null).ToListAsync();
+			Employees = await Context.Employees.Where(e => e.Deleted != null).ToListAsync();
 		}
 		else
 		{
-			products = await Context.Products.Where(p => p.Deleted == null).ToListAsync();
+			Employees = await Context.Employees.Where(e => e.Deleted == null).ToListAsync();
 		}
 		Context.Dispose();
 	}
 
 	public async Task RefreshData(bool showToast)
 	{
-		products = null;
+		Employees = null;
 		await LoadData();
 
 		if (showToast)
@@ -137,7 +129,7 @@ else
 					IconName = IconName.ArrowClockwise,
 					Content =@<div class="text-white">
 							<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
-							Products Refreshed!
+							Employees Refreshed!
 						   </div>
 				}
 			);

@@ -1,5 +1,5 @@
 ﻿@page "/db/customers"
-
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Customer
 @attribute [Authorize]
 
 <PageTitle>Customers</PageTitle>
@@ -7,214 +7,52 @@
 <h2>Customers</h2>
 
 @inject NavigationManager NavigationManager
-@inject CustomerService Service
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
 <TrashModal @ref="trashModal"
-	ObjectName="@customer.PhoneNumber"
+			ObjectName="@customer.FullName"
 			SubmitMethod="SubmitRemoval" />
 
-<Modal @ref="customerModal" Title="@ModalTitle"
-	   UseStaticBackdrop="true"
-	   CloseOnEscape="false"
-	   IsVerticallyCentered="true"
-	   Size="ModalSize.ExtraLarge">
-		<BodyTemplate>
+<CustomerModal @ref="customerInfoModal"
+			   ModalType="ModalViewType.Get" />
 
-			@if (ModalTitle.Contains("Information"))
-		{
-			<h3>@customer.PhoneNumber</h3>
+<CustomerModal @ref="customerEditModal"
+			   ModalType="ModalViewType.Update"
+			   OnSubmit="() => customerList.RefreshData(false)" />
 
-			<AuthorizeView Roles="Manager, Admin">
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">ID: </label>
-					<div class="col-md-10">
-						<input class="form-control-plaintext" readonly="" value="@customer.Id" />
-					</div>
-				</div>
-			</AuthorizeView>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Date Created: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.DateCreated" />
-				</div>
-			</div>
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Last Updated: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.DateUpdated" />
-				</div>
-			</div>
-
-			<hr />
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Phone number: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.PhoneNumber" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">First Name: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.FirstName" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Last Name: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.LastName" />
-				</div>
-			</div>
-
-			<div class="form-group row mb-2">
-				<label class="col-md-2 col-form-label">Email: </label>
-				<div class="col-md-10">
-					<input class="form-control-plaintext" readonly="" value="@customer.EmailAddress" />
-				</div>
-			</div>
-			<div class="form-group row">
-				<div class="col-md-12">
-					<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Close</Button>
-				</div>
-			</div>
-		}
-		else 
-		{
-			<EditForm EditContext="editContext" FormName="AddCustomer" OnValidSubmit="SubmitForm">
-				<DataAnnotationsValidator />
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Phone number: <span class="text-danger">*</span></label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@customer.PhoneNumber" Placeholder="000 000-000" />
-						<ValidationMessage For="() => customer.PhoneNumber" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">First Name: </label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@customer.FirstName" Placeholder="Enter first name" />
-						<ValidationMessage For="() => customer.FirstName" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Last Name: </label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@customer.LastName" Placeholder="Enter last name" />
-						<ValidationMessage For="() => customer.LastName" />
-					</div>
-				</div>
-
-				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Email: </label>
-					<div class="col-md-10">
-						<TextInput @bind-Value="@customer.EmailAddress" Placeholder="Enter email" />
-						<ValidationMessage For="() => customer.EmailAddress" />
-					</div>
-				</div>
-
-				<div class="form-group row">
-					<div class="col-md-12">
-						<Button @onclick="@HideModal" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
-						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">@ModalTitle</Button>
-					</div>
-				</div>
-			</EditForm>
-		}
-	</BodyTemplate>
-</Modal>
+<CustomerModal @ref="customerCreateModal"
+			   ModalType="ModalViewType.Create"
+			   OnSubmit="() => customerList.RefreshData(false)" />
 
 <AuthorizeView Roles="Manager, Admin">
-	<Button @onclick="ShowAddModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Customer</Button>
+	<Button @onclick="customerCreateModal.Show" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Customer</Button>
 	<Button To="db/customers/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
-@if (customers is null)
-{
-	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
-}
-else 
-{
-	<table class="table table-striped table-hover">
-		<thead>
-			<tr>
-				<th width="20%">Name</th>
-				<th width="30%">Phone Number</th>
-				<th width="30%">Email</th>
-				<th width="10%" class="text-center"><Button @ref="RefreshButton" @onclick="RefreshData" Color="ButtonColor.Info" Outline="true">Refresh</Button></th>
-			</tr>
-		</thead>
-		<tbody class="table-group-divider">
-			@if (customers.Count == 0)
-			{
-				<tr>
-					<td colspan="4" class="text-center">
-						<UserMessage Color="AlertColor.Warning" Type="MessageType.Error" ErrorNumber="100" Message="No existing customers found in database." />
-					</td>
-				</tr>
-			}
-			@foreach (var item in customers)
-			{
-				@if (item.DateDeleted is null)
-				{
-					<tr @ondblclick="(() => ShowInfoModal(item))">
-						<td>@item.FullName</td>
-						<td>@item.PhoneNumber</td>
-						<td>@item.EmailAddress</td>
-						<td class="text-center">
-							<AuthorizeView Roles="Manager, Admin">
-								<Button @onclick="() => ShowEditModal(item)" Color="ButtonColor.Info"><i class="bi bi-pencil-square"></i></Button>
-								<Button @onclick="() => ShowRemoveModal(item)" Color="ButtonColor.Danger"><i class="bi bi-trash"></i></Button>
-							</AuthorizeView>
-						</td>
-					</tr>
-				}
-			}
-		</tbody>
-	</table>
-}
+<CustomerList @ref="customerList"
+			  OnEditModal="(customer) => customerEditModal.Show(customer)"
+			  OnRemoveModal="(customer) => ShowRemoveModal(customer)"
+			  OnInfoModal="(customer) => customerInfoModal.Show(customer)" />
 
 
 @code {
+	private ApplicationDbContext? Context { get; set; }
+
 	private TrashModal trashModal { get; set; } = default!;
 
-	private Modal customerModal { get; set; } = default!;
-	private string ModalTitle { get; set; } = string.Empty;
+	private CustomerList customerList { get; set; } = default!;
 
-	private EditContext editContext { get; set; } = default!;
-	private Customer customer { get; set; } = new();
+	private CustomerModal customerInfoModal { get; set; } = default!;
+	private CustomerModal customerEditModal { get; set; } = default!;
+	private CustomerModal customerCreateModal { get; set; } = default!;
 
-	private List<Customer>? customers { get; set; } = new();
-	private Button RefreshButton { get; set; } = default!;
-
-	private Button submitButton { get; set; } = default!;
-
-	protected override async Task OnInitializedAsync()
-	{
-		await LoadData();
-	}
-
-	public async Task LoadData()
-	{
-		customers = null;
-		await Task.Delay(10);
-		customers = await Service.GetAvailableCustomers();
-	}
-
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
-	}
+	private Data.Enities.Customer customer { get; set; } = new();
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Customer item)
+	private async Task ShowRemoveModal(Data.Enities.Customer item)
 	{
 		customer = item;
 		await trashModal.Show();
@@ -223,57 +61,24 @@ else
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
-		await Service.SoftDeleteCustomer(customer);
-		await LoadData();
+		Context = DbFactory.CreateDbContext();
+		customer.Deleted = DateTime.Now;
+
+		Context.Customers.Update(customer);
+		await Context.SaveChangesAsync();
+		Context.Dispose();
+
+		await customerList.RefreshData(false);
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitForm()
+	private async Task ShowEditModal(Data.Enities.Customer item)
 	{
-		submitButton.ShowLoading("Loading...");
-
-		if (ModalTitle.Contains("Add"))
-		{
-			await Service.CreateCustomer(customer);
-		}
-		else if (ModalTitle.Contains("Edit"))
-		{
-			await Service.UpdateCustomer(customer);
-		}
-
-		await LoadData();
-		await HideModal();
-		submitButton.HideLoading();
+		await customerEditModal.Show(item);
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowAddModal()
+	private async Task ShowInfoModal(Data.Enities.Customer item)
 	{
-		customer = new();
-		ModalTitle = "Add Customer";
-		editContext = new EditContext(customer);
-		await customerModal.ShowAsync();
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowEditModal(Customer item)
-	{
-		customer = item;
-		ModalTitle = "Edit Customer - " + customer.PhoneNumber;
-		editContext = new EditContext(customer);
-		await customerModal.ShowAsync();
-	}
-
-	private async Task ShowInfoModal(Customer item)
-	{
-		customer = await Service.GetCustomer(item.Id);
-		ModalTitle = "Customer Information";
-		editContext = new EditContext(customer);
-		await customerModal.ShowAsync();
-	}
-
-	private async Task HideModal()
-	{
-		await customerModal.HideAsync();
+		await customerInfoModal.Show(item);
 	}
 }

@@ -32,7 +32,7 @@
 	<Button To="db/products/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
-<List @ref="productList"
+<ProductList @ref="productList"
 	OnEditModal="(product) => productEditModal.Show(product)"
 	  OnRemoveModal="(product) => ShowRemoveModal(product)"
 	  OnInfoModal="(product) => productInfoModal.Show(product)" />
@@ -43,7 +43,7 @@
 
 	private TrashModal trashModal { get; set; } = default!;
 
-	private List productList { get; set; } = default!;
+	private ProductList productList { get; set; } = default!;
 
 	private ProductModal productInfoModal { get; set; } = default!;
 	private ProductModal productEditModal { get; set; } = default!;

@@ -151,9 +151,9 @@ else
 	private string ModalTitle { get; set; } = string.Empty;
 
 	private EditContext editContext { get; set; } = default!;
-	private Customer customer { get; set; } = new();
+	private Data.Enities.Customer customer { get; set; } = new();
 
-	private List<Customer>? customers { get; set; } = new();
+	private List<Data.Enities.Customer>? customers { get; set; } = new();
 	private Button RefreshButton { get; set; } = default!;
 
 	private Button submitButton { get; set; } = default!;
@@ -176,7 +176,7 @@ else
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Customer item)
+	private async Task ShowRemoveModal(Data.Enities.Customer item)
 	{
 		customer = item;
 		await deleteModal.Show();
@@ -190,7 +190,7 @@ else
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRestoreModal(Customer item)
+	private async Task ShowRestoreModal(Data.Enities.Customer item)
 	{
 		customer = item;
 		await restoreModal.Show();
@@ -203,7 +203,7 @@ else
 		await LoadData();
 	}
 
-	private async Task ShowInfoModal(Customer item)
+	private async Task ShowInfoModal(Data.Enities.Customer item)
 	{
 		customer = await Service.GetCustomer(item.Id);
 		ModalTitle = "Customer Information";
