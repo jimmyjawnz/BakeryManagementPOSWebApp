@@ -6,15 +6,14 @@
 <title>Customers</title>
 <h2>Customers</h2>
 
-@inject NavigationManager NavigationManager
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-<TrashModal @ref="trashModal"
-			ObjectName="@customer.FullName"
-			SubmitMethod="SubmitRemoval" />
+<CustomerModal @ref="customerTrashModal"
+			ModalType="ModalViewType.Trash"
+			OnSubmit="() => customerList.RefreshData(false)" />
 
 <CustomerModal @ref="customerInfoModal"
 			   ModalType="ModalViewType.Get" />
@@ -28,53 +27,44 @@
 			   OnSubmit="() => customerList.RefreshData(false)" />
 
 <AuthorizeView Roles="Manager, Admin">
-	<Button @onclick="customerCreateModal.Show" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Customer</Button>
+	<Button @onclick="ShowCreateModal" Color="ButtonColor.Primary" Size="ButtonSize.Large" class="mb-2">Add Customer</Button>
 	<Button To="db/customers/trash" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2 float-end">View Trash</Button>
 </AuthorizeView>
 
 <CustomerList @ref="customerList"
-			  OnEditModal="(customer) => customerEditModal.Show(customer)"
+			  OnEditModal="(customer) => ShowEditModal(customer)"
 			  OnRemoveModal="(customer) => ShowRemoveModal(customer)"
-			  OnInfoModal="(customer) => customerInfoModal.Show(customer)" />
+			  OnInfoModal="(customer) => ShowInfoModal(customer)" />
 
 
 @code {
 	private ApplicationDbContext? Context { get; set; }
-
-	private TrashModal trashModal { get; set; } = default!;
 
 	private CustomerList customerList { get; set; } = default!;
 
 	private CustomerModal customerInfoModal { get; set; } = default!;
 	private CustomerModal customerEditModal { get; set; } = default!;
 	private CustomerModal customerCreateModal { get; set; } = default!;
+	private CustomerModal customerTrashModal { get; set; } = default!;
 
 	private Data.Enities.Customer customer { get; set; } = new();
 
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Manager, Admin")]
 	private async Task ShowRemoveModal(Data.Enities.Customer item)
 	{
-		customer = item;
-		await trashModal.Show();
+		await customerTrashModal.Show(item);
 	}
 
-	[Authorize(Roles = "Manager,Admin")]
-	private async Task SubmitRemoval()
-	{
-		Context = DbFactory.CreateDbContext();
-		customer.Deleted = DateTime.Now;
-
-		Context.Customers.Update(customer);
-		await Context.SaveChangesAsync();
-		Context.Dispose();
-
-		await customerList.RefreshData(false);
-	}
-
-	[Authorize(Roles = "Manager,Admin")]
+	[Authorize(Roles = "Manager, Admin")]
 	private async Task ShowEditModal(Data.Enities.Customer item)
 	{
 		await customerEditModal.Show(item);
+	}
+
+	[Authorize(Roles = "Manager, Admin")]
+	private async Task ShowCreateModal()
+	{
+		await customerCreateModal.Show();
 	}
 
 	private async Task ShowInfoModal(Data.Enities.Customer item)

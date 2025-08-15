@@ -88,7 +88,7 @@ else
 
 	private List<Customer>? customers { get; set; } = null;
 
-	private List<ToastMessage> ToastMessages = new();
+	public List<ToastMessage> ToastMessages = new();
 
 	private async Task<GridDataProviderResult<Customer>> CustomersDataProvider(GridDataProviderRequest<Customer> request)
 	{

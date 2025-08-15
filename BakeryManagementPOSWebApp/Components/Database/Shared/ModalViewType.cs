@@ -4,6 +4,9 @@
     {
         Get,
         Update,
-        Create
+        Create,
+        Restore,
+        Trash,
+        Delete
     }
 }

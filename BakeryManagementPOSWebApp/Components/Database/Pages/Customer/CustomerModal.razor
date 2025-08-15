@@ -3,7 +3,7 @@
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-<Toasts class="p-3 mt-5" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+<Toasts class="p-3" Style="margin-top: 80px;" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
 
 @if (ModalType.Equals(ModalViewType.Get))
 {
@@ -128,7 +128,7 @@ else if (ModalType.Equals(ModalViewType.Update))
 		</BodyTemplate>
 	</Modal>
 }
-else 
+else if (ModalType.Equals(ModalViewType.Create))
 {
 	<Modal @ref="modalRef" Title="New Customer"
 			UseStaticBackdrop="true"
@@ -179,6 +179,63 @@ else
 				</div>
 
 			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Trash))
+{
+	<Modal @ref="modalRef" Title="Trash Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Move <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> to trash?</h2>
+			<p>This customer will be put into the trash.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Send to Trash</Button>
+				</div>
+			</div>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Restore))
+{
+	<Modal @ref="modalRef" Title="Restore Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Restore <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> from trash?</h2>
+			<p>This customer will be restored into the system.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Success" Class="float-end me-2">Restore</Button>
+				</div>
+			</div>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Delete))
+{
+	<Modal @ref="modalRef" Title="Delete Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Delete <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> forever?</h2>
+			<p>This customer will be permanently deleted and unable to be recovered.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Delete</Button>
+				</div>
+			</div>
 		</BodyTemplate>
 	</Modal>
 }
@@ -259,7 +316,10 @@ else
 					</div>
 				}
 				);
+				Console.ForegroundColor = ConsoleColor.DarkRed;
 				Console.WriteLine("ERROR -> Unable to Update: " + SentCustomer.Id + " Customer is no longer in the database.");
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
 			}
 			else
 			{
@@ -306,6 +366,137 @@ else
 	}
 			);
 
+
+		await OnSubmit.InvokeAsync();
+		await Hide();
+	}
+
+	public async Task SubmitTrash()
+	{
+		var context = DbFactory.CreateDbContext();
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			submitButton.ShowLoading("Trashing...");
+			context.Customers.Update(new Customer()
+				{
+					Id = SentCustomer.Id,
+					FirstName = SentCustomer.FirstName,
+					LastName = SentCustomer.LastName,
+					PhoneNumber = SentCustomer.PhoneNumber,
+					EmailAddress = SentCustomer.EmailAddress,
+					LastUpdated = SentCustomer.LastUpdated,
+					Created = SentCustomer.Created,
+					Deleted = DateTime.Now
+				}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Restore))
+		{
+			submitButton.ShowLoading("Restoring...");
+			context.Customers.Update(new Customer()
+			{
+				Id = SentCustomer.Id,
+				FirstName = SentCustomer.FirstName,
+				LastName = SentCustomer.LastName,
+				PhoneNumber = SentCustomer.PhoneNumber,
+				EmailAddress = SentCustomer.EmailAddress,
+				LastUpdated = SentCustomer.LastUpdated,
+				Created = SentCustomer.Created,
+				Deleted = null
+			}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			submitButton.ShowLoading("Deleting...");
+			context.Customers.Remove(new Customer()
+			{
+				Id = SentCustomer.Id
+			});
+		}
+
+		try
+		{
+			await context.SaveChangesAsync();
+			await context.DisposeAsync();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!CustomerExists(SentCustomer.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Customer is no longer in the database.
+					</div>
+				}
+				);
+				Console.ForegroundColor = ConsoleColor.DarkRed;
+				Console.WriteLine("ERROR -> Unable to Update: " + SentCustomer.Id + " Customer is no longer in the database.");
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+					@ex.Message
+					</div>
+				});
+				throw;
+			}
+		}
+		finally
+		{
+			submitButton.HideLoading();
+		}
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Warning,
+				IconName = IconName.TrashFill,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.TrashFill" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Trashed!
+				</div>
+			});
+		}
+		else if(ModalType.Equals(ModalViewType.Restore))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Success,
+				IconName = IconName.ArrowCounterclockwise,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.ArrowCounterclockwise" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Restored!
+				</div>
+			});
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Danger,
+				IconName = IconName.FileEarmarkX,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.FileEarmarkX" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Deleted!
+				</div>
+			});
+		}
 
 		await OnSubmit.InvokeAsync();
 		await Hide();
