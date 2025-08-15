@@ -1,5 +1,7 @@
 ﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
+@implements IDisposable
+
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
@@ -113,16 +115,47 @@ else
 
 	private async Task LoadData()
 	{
-		Context = DbFactory.CreateDbContext();
-		if (ShowTrashed)
-		{
-			products = await Context.Products.Where(p => p.Deleted != null).ToListAsync();
+		try {
+			Context = DbFactory.CreateDbContext();
+
+			if (ShowTrashed)
+			{
+				products = await Context.Products.Where(p => p.Deleted != null).ToListAsync();
+			}
+			else
+			{
+				products = await Context.Products.Where(p => p.Deleted == null).ToListAsync();
+			}
+
+			Context.Dispose();
 		}
-		else
+		catch (Exception ex)
 		{
-			products = await Context.Products.Where(p => p.Deleted == null).ToListAsync();
+			ToastMessages.Add(new ()
+			{
+				Type = ToastType.Danger,
+				IconName = IconName.ExclamationOctagonFill,
+				Content = @<div>
+					<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+					ERROR
+					<br />
+					@ex.Message
+				</div>
+			});
+			Console.ForegroundColor = ConsoleColor.DarkRed;
+			Console.WriteLine("ERROR -> Unable to load Products.");
+			Console.WriteLine("\t" + ex.ToString());
+			Console.ForegroundColor = ConsoleColor.White;
 		}
-		Context.Dispose();
+		finally
+		{
+			await Context.DisposeAsync();
+		}
+	}
+
+	public void Dispose()
+	{
+		Context?.Dispose();
 	}
 
 	public async Task RefreshData(bool showToast)
