@@ -1,44 +1,44 @@
-﻿@page "/db/products/trash"
-@using BakeryManagementPOSWebApp.Components.Database.Pages.Product
+﻿@page "/db/customers/trash"
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Customer
 @attribute [Authorize(Roles = "Admin,Manager")]
 
-<PageTitle>Product Trash</PageTitle>
-<title>Product Trash</title>
-<h2>Product Trash</h2>
+<PageTitle>Customer Trash</PageTitle>
+<title>Customer Trash</title>
+<h2>Customer Trash</h2>
 
 @inject NavigationManager NavigationManager
-@inject ProductService Service
+@inject CustomerService Service
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
 <TrashModal @ref="deleteModal"
-	ObjectName="@product.Name"
+	ObjectName="@customer.FullName"
 			SubmitMethod="SubmitRemoval"
 			Text="This item will be deleted permanently!"
 			Type="delete"/>
 
 <TrashModal @ref="restoreModal"
-	ObjectName="@product.Name"
+	ObjectName="@customer.FullName"
 			SubmitMethod="SubmitRestore"
 			Text="This item will be restored and moved out of trash."
 			Type="restore"/>
 
-<ProductModal @ref="productModal"
+<CustomerModal @ref="customerModal"
 			  ModalType="ModalViewType.Get"/>
 
-<Button To="db/products" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Products</Button>
+<Button To="db/customers" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Customers</Button>
 
-@if (products is null)
+@if (customers is null)
 {
 	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
 }
 else 
 {
-	<ProductList @ref="productList"
+	<CustomerList @ref="customerList"
 		ShowTrashed=true
-		  OnDeleteModal="(product) => ShowRemoveModal(product)"
-		  OnRestoreModal="(product) => ShowRestoreModal(product)"
-		  OnInfoModal="(product) => ShowInfoModal(product)" />
+		  OnDeleteModal="(customer) => ShowRemoveModal(customer)"
+		  OnRestoreModal="(customer) => ShowRestoreModal(customer)"
+		  OnInfoModal="(customer) => ShowInfoModal(customer)" />
 }
 
 
@@ -46,22 +46,22 @@ else
 	private TrashModal deleteModal { get; set; } = default!;
 	private TrashModal restoreModal { get; set; } = default!;
 
-	private ProductList productList { get; set; } = default!;
+	private CustomerList customerList { get; set; } = default!;
 
-	private ProductModal productModal { get; set; } = default!;
+	private CustomerModal customerModal { get; set; } = default!;
 	private string ModalTitle { get; set; } = string.Empty;
 
 	private EditContext editContext { get; set; } = default!;
-	private Data.Enities.Product product { get; set; } = new();
+	private Data.Enities.Customer customer { get; set; } = new();
 
-	private List<Data.Enities.Product>? products { get; set; } = new();
+	private List<Data.Enities.Customer>? customers { get; set; } = new();
 	private Button RefreshButton { get; set; } = default!;
 
 	private Button submitButton { get; set; } = default!;
 
 	public async Task LoadData()
 	{
-		await productList.RefreshData(true);
+		await customerList.RefreshData(true);
 	}
 
 	private void RefreshData()
@@ -70,40 +70,40 @@ else
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRemoveModal(Data.Enities.Product item)
+	private async Task ShowRemoveModal(Data.Enities.Customer item)
 	{
-		product = item;
+		customer = item;
 		await deleteModal.Show();
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
-		await Service.HardDeleteProduct(product);
+		await Service.HardDeleteCustomer(customer);
 		await LoadData();
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
-	private async Task ShowRestoreModal(Data.Enities.Product item)
+	private async Task ShowRestoreModal(Data.Enities.Customer item)
 	{
-		product = item;
+		customer = item;
 		await restoreModal.Show();
 	}
 
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRestore()
 	{
-		await Service.RecoverProduct(product);
+		await Service.RecoverCustomer(customer);
 		await LoadData();
 	}
 
-	private async Task ShowInfoModal(Data.Enities.Product item)
+	private async Task ShowInfoModal(Data.Enities.Customer item)
 	{
-		await productModal.Show(item);
+		await customerModal.Show(item);
 	}
 
 	private async Task HideModal()
 	{
-		await productModal.Hide();
+		await customerModal.Hide();
 	}
 }
