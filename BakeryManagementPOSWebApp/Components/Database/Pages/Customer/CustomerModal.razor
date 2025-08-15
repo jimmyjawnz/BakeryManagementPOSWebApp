@@ -12,8 +12,7 @@
 		   Size="ModalSize.ExtraLarge">
 		<BodyTemplate>
 			<h3>
-				@SentCustomer.FullName
-				<span class="float-end">@SentCustomer.PhoneNumber</span>
+				@SentCustomer.PhoneAndFullName
 			</h3>
 
 			<AuthorizeView Roles="Admin">
@@ -141,7 +140,7 @@ else
 				<DataAnnotationsValidator />
 
 				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Phone number: </label>
+					<label class="col-md-2 col-form-label">Phone number: <span class="text-danger">*</span></label>
 					<div class="col-md-10">
 						<TextInput @bind-Value="@customerDT.PhoneNumber" Placeholder="000 000-000" />
 						<ValidationMessage For="() => customerDT.PhoneNumber" />
@@ -149,7 +148,7 @@ else
 				</div>
 
 				<div class="form-group row mb-2">
-					<label class="col-md-2 col-form-label">Firstname: </label>
+					<label class="col-md-2 col-form-label">Firstname: <span class="text-danger">*</span></label>
 					<div class="col-md-10">
 						<TextInput @bind-Value="@customerDT.FirstName" Placeholder="Enter firstname" />
 						<ValidationMessage For="() => customerDT.FirstName" />
@@ -329,12 +328,15 @@ else
 			PhoneNumber = customer.PhoneNumber,
 			Email = customer.EmailAddress
 		};
+
+		editContext = new(customerDT);
 		await modalRef.ShowAsync();
 	}
 
 	public async Task Show()
 	{
 		customerDT = new();
+		editContext = new(customerDT);
 		await modalRef.ShowAsync();
 	}
 
@@ -347,7 +349,7 @@ else
 	{
 		[Required(ErrorMessage = "Firstname is required.")]
 		[StringLength(50, ErrorMessage = "Firstname is too long.")]
-		public string FirstName { get; set; } = string.Empty;
+		public string? FirstName { get; set; } = string.Empty;
 
 		[StringLength(50, ErrorMessage = "Lastname is too long.")]
 		public string? LastName { get; set; } = string.Empty;

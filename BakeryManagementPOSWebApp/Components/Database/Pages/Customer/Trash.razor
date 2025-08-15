@@ -64,11 +64,6 @@ else
 		await customerList.RefreshData(true);
 	}
 
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
-	}
-
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task ShowRemoveModal(Data.Enities.Customer item)
 	{
