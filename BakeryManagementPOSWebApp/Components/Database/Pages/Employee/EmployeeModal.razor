@@ -239,7 +239,65 @@ else
 		</BodyTemplate>
 	</Modal>
 }
-
+else if (ModalType.Equals(ModalViewType.Trash))
+{
+<Modal @ref="modalRef" Title="Trash Employee"
+	   UseStaticBackdrop="true"
+	   CloseOnEscape="false"
+	   IsVerticallyCentered="true"
+	   Size="ModalSize.Large">
+	<BodyTemplate>
+		<h2>Move <strong>@employeeDT.PhoneNumber (@employeeDT.FirstName @employeeDT.LastName)</strong> to trash?</h2>
+		<p>This employee will be put into the trash.</p>
+		<strong><p>This will prevent them from being able to log in.</p></strong>
+		<div class="form-group row">
+			<div class="col-md-12">
+				<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+				<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Send to Trash</Button>
+			</div>
+		</div>
+	</BodyTemplate>
+</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Restore))
+{
+<Modal @ref="modalRef" Title="Restore Employee"
+	   UseStaticBackdrop="true"
+	   CloseOnEscape="false"
+	   IsVerticallyCentered="true"
+	   Size="ModalSize.Large">
+	<BodyTemplate>
+		<h2>Restore <strong>@employeeDT.PhoneNumber (@employeeDT.FirstName @employeeDT.LastName)</strong> from trash?</h2>
+		<p>This employee will be restored into the system.</p>
+		<strong><p>This allow them to log in again.</p></strong>
+		<div class="form-group row">
+			<div class="col-md-12">
+				<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+				<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Success" Class="float-end me-2">Restore</Button>
+			</div>
+		</div>
+	</BodyTemplate>
+</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Delete))
+{
+<Modal @ref="modalRef" Title="Delete Employee"
+	   UseStaticBackdrop="true"
+	   CloseOnEscape="false"
+	   IsVerticallyCentered="true"
+	   Size="ModalSize.Large">
+	<BodyTemplate>
+		<h2>Delete <strong>@employeeDT.PhoneNumber (@employeeDT.FirstName @employeeDT.LastName)</strong> forever?</h2>
+		<p>This employee will be permanently deleted and unable to be recovered.</p>
+		<div class="form-group row">
+			<div class="col-md-12">
+				<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+				<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Delete</Button>
+			</div>
+		</div>
+	</BodyTemplate>
+</Modal>
+}
 
 @code {
 	[Parameter]
@@ -468,6 +526,137 @@ else
 				</div>
 			});
 		}
+	}
+
+	public async Task SubmitTrash()
+	{
+		var context = DbFactory.CreateDbContext();
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			submitButton.ShowLoading("Trashing...");
+			context.Employees.Update(new Employee()
+			{
+				Id = SentEmployee.Id,
+				FirstName = SentEmployee.FirstName,
+				LastName = SentEmployee.LastName,
+				PhoneNumber = SentEmployee.PhoneNumber,
+				Email = SentEmployee.Email,
+				LastUpdated = SentEmployee.LastUpdated,
+				Created = SentEmployee.Created,
+				Deleted = DateTime.Now
+			}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Restore))
+		{
+			submitButton.ShowLoading("Restoring...");
+			context.Employees.Update(new Employee()
+			{
+				Id = SentEmployee.Id,
+				FirstName = SentEmployee.FirstName,
+				LastName = SentEmployee.LastName,
+				PhoneNumber = SentEmployee.PhoneNumber,
+				Email = SentEmployee.Email,
+				LastUpdated = SentEmployee.LastUpdated,
+				Created = SentEmployee.Created,
+				Deleted = null
+			}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			submitButton.ShowLoading("Deleting...");
+			context.Employees.Remove(new Employee()
+			{
+				Id = SentEmployee.Id
+			});
+		}
+
+		try
+		{
+			await context.SaveChangesAsync();
+			await context.DisposeAsync();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!EmployeeExists(SentEmployee.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Customer is no longer in the database.
+					</div>
+				}
+				);
+				Console.ForegroundColor = ConsoleColor.DarkRed;
+				Console.WriteLine("ERROR -> Unable to Update: " + SentEmployee.Id + " Employee is no longer in the database.");
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+					@ex.Message
+					</div>
+				});
+				throw;
+			}
+		}
+		finally
+		{
+			submitButton.HideLoading();
+		}
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Warning,
+				IconName = IconName.TrashFill,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.TrashFill" class="me-2"></Icon>
+					Customer <strong>@SentEmployee.FullName</strong> Trashed!
+				</div>
+			});
+		}
+		else if (ModalType.Equals(ModalViewType.Restore))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Success,
+				IconName = IconName.ArrowCounterclockwise,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.ArrowCounterclockwise" class="me-2"></Icon>
+					Customer <strong>@SentEmployee.FullName</strong> Restored!
+				</div>
+			});
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Danger,
+				IconName = IconName.FileEarmarkX,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.FileEarmarkX" class="me-2"></Icon>
+					Customer <strong>@SentEmployee.FullName</strong> Deleted!
+				</div>
+			});
+		}
+
+		await OnSubmit.InvokeAsync();
+		await Hide();
 	}
 
 	private bool EmployeeExists(string id)
