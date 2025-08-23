@@ -1,4 +1,5 @@
-﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+﻿@* @inject IDbContextFactory<ApplicationDbContext> DbFactory *@
+@inject ProductService ProductService
 
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
@@ -74,56 +75,47 @@ else
 }
 
 @code {
-	[Parameter]
-	public EventCallback<Product> OnEditModal { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnEditModal { get; set; }
 
-	[Parameter]
-	public EventCallback<Product> OnRemoveModal { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnRemoveModal { get; set; }
 
-	[Parameter]
-	public EventCallback<Product> OnInfoModal { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnInfoModal { get; set; }
 
-	[Parameter]
-	public EventCallback<Product> OnDeleteModal { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnDeleteModal { get; set; }
 
-	[Parameter]
-	public EventCallback<Product> OnRestoreModal { get; set; }
+    [Parameter]
+    public EventCallback<Product> OnRestoreModal { get; set; }
 
-	[Parameter]
-	public bool ShowTrashed { get; set; } = false;
+    [Parameter]
+    public bool ShowTrashed { get; set; } = false;
 
-	private ApplicationDbContext Context = default!;
+    private ApplicationDbContext Context = default!;
 
-	private List<Product>? products { get; set; } = null;
+    private List<Product>? products { get; set; } = null;
 
-	private List<ToastMessage> ToastMessages = new();
+    private List<ToastMessage> ToastMessages = new();
 
-	private async Task<GridDataProviderResult<Product>> ProductsDataProvider(GridDataProviderRequest<Product> request)
-	{
-		if (products is null)
-			await LoadData();
+    private async Task<GridDataProviderResult<Product>> ProductsDataProvider(GridDataProviderRequest<Product> request)
+    {
+        if (products is null)
+            await LoadData();
 
-		return await Task.FromResult(request.ApplyTo(products!));
-	}
+        return await Task.FromResult(request.ApplyTo(products!));
+    }
 
-	protected override async Task OnInitializedAsync()
-	{
-		await LoadData();
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
 
-	private async Task LoadData()
-	{
-		Context = DbFactory.CreateDbContext();
-		if (ShowTrashed)
-		{
-			products = await Context.Products.Where(p => p.Deleted != null).ToListAsync();
-		}
-		else
-		{
-			products = await Context.Products.Where(p => p.Deleted == null).ToListAsync();
-		}
-		Context.Dispose();
-	}
+    private async Task LoadData()
+    {
+        products = await ProductService.GetExistingProducts(null);
+    }
 
 	public async Task RefreshData(bool showToast)
 	{

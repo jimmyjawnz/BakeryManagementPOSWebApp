@@ -79,7 +79,7 @@ else
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRemoval()
 	{
-		await Service.HardDeleteProduct(product);
+		await Service.HardDeleteProduct(product.Id);
 		await LoadData();
 	}
 
@@ -93,7 +93,7 @@ else
 	[Authorize(Roles = "Manager,Admin")]
 	private async Task SubmitRestore()
 	{
-		await Service.RecoverProduct(product);
+		await Service.RestoreProduct(product.Id);
 		await LoadData();
 	}
 

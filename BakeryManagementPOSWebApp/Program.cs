@@ -2,6 +2,7 @@ using BakeryManagementPOSWebApp.Components;
 using BakeryManagementPOSWebApp.Components.Account;
 using BakeryManagementPOSWebApp.Data;
 using BakeryManagementPOSWebApp.Data.Enities;
+using BakeryManagementPOSWebApp.Services;
 using BakeryManagementPOSWebApp.Services.Customers;
 using BakeryManagementPOSWebApp.Services.Employees;
 using BakeryManagementPOSWebApp.Services.Orders;
@@ -29,11 +30,6 @@ builder.Services.AddRazorComponents()
 builder.Services.AddBlazorBootstrap();
 
 consoleMessage("[s] - Added Components");
-
-builder.Services.AddScoped<OrderService>();
-builder.Services.AddScoped<ProductService>();
-builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<EmployeeService>();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -74,7 +70,14 @@ builder.Services.AddIdentityCore<Employee>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-consoleMessage("[s] - Added and Configured DB Service");
+
+builder.Services.AddScoped<DatabaseContextService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<EmployeeService>();
+
+consoleMessage("[s] - Added and Configured DB Services");
 
 var app = builder.Build();
 
