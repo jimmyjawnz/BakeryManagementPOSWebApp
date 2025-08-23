@@ -34,7 +34,7 @@
 }
 else 
 {
-	<List @ref="productList"
+	<ProductList @ref="productList"
 		ShowTrashed=true
 		  OnDeleteModal="(product) => ShowRemoveModal(product)"
 		  OnRestoreModal="(product) => ShowRestoreModal(product)"
@@ -46,7 +46,7 @@ else
 	private TrashModal deleteModal { get; set; } = default!;
 	private TrashModal restoreModal { get; set; } = default!;
 
-	private List productList { get; set; } = default!;
+	private ProductList productList { get; set; } = default!;
 
 	private ProductModal productModal { get; set; } = default!;
 	private string ModalTitle { get; set; } = string.Empty;

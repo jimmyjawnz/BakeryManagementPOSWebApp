@@ -1,19 +1,21 @@
 ﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
+@implements IDisposable
+
 @rendermode @(new InteractiveServerRenderMode(false))
 @attribute [StreamRendering]
 
-<Toasts class="p-3" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+<Toasts class="p-3" Style="margin-top: 80px;" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
 
-@if (Employees is null)
+@if (customers is null)
 {
 	<UserMessage Color="AlertColor.Secondary" Type="MessageType.Loading" />
 }
 else 
 {
-	<Grid TItem="Employee"
+	<Grid TItem="Customer"
 		  Class="table table-hover table-striped table-sm"
-		  DataProvider="EmployeesDataProvider"
+		  DataProvider="CustomersDataProvider"
 		  AllowFiltering="true"
 		  Responsive="true"
 		  AllowRowClick="true"
@@ -22,17 +24,17 @@ else
 		  HeaderRowCssClass="">
 
 		<GridColumns>
-			<GridColumn TItem="Employee" HeaderText="Fullname" PropertyName="FullName" FilterTextboxWidth="100">
+			<GridColumn TItem="Customer" HeaderText="Fullname" PropertyName="FullName" FilterTextboxWidth="100">
 				<Button Class="border-0" @onclick="() => OnInfoModal.InvokeAsync(context)" Outline=true Size=ButtonSize.Small Color="ButtonColor.Primary" TooltipTitle="Info"><i class="bi bi-info-circle-fill"></i></Button>
 				@context.FullName
 			</GridColumn>
-			<GridColumn TItem="Employee" HeaderText="Phone Number" PropertyName="PhoneNumber" FilterTextboxWidth="100">
+			<GridColumn TItem="Customer" HeaderText="Phone Number" PropertyName="PhoneNumber" FilterTextboxWidth="100">
 				@context.PhoneNumber
 			</GridColumn>
-			<GridColumn TItem="Employee" HeaderText="Email" PropertyName="Email" FilterTextboxWidth="100">
-				@context.Email
+			<GridColumn TItem="Customer" HeaderText="Email" PropertyName="EmailAddress" FilterTextboxWidth="100">
+				@context.EmailAddress
 			</GridColumn>
-			<GridColumn TItem="Employee" HeaderText="" Filterable=false Class="text-center">
+			<GridColumn TItem="Customer" HeaderText="" Filterable=false Class="text-center">
 				<HeaderContent>
 					<Button @onclick="() => RefreshData(true)" Color="ButtonColor.Info" Outline="true">
 						<Icon Name="IconName.ArrowClockwise" class="me-1"></Icon>
@@ -53,8 +55,6 @@ else
 					{
 						<AuthorizeView Roles="Manager, Admin" Context="auth">
 							<Button @onclick="() => OnEditModal.InvokeAsync(context)" Color="ButtonColor.Info" TooltipTitle="Edit"><i class="bi bi-pencil-square"></i></Button>
-						</AuthorizeView>
-						<AuthorizeView Roles="Admin" Context="auth">
 							<Button @onclick="() => OnRemoveModal.InvokeAsync(context)" Color="ButtonColor.Danger" TooltipTitle="Trash"><i class="bi bi-trash"></i></Button>
 						</AuthorizeView>
 					}
@@ -67,35 +67,35 @@ else
 
 @code {
 	[Parameter]
-	public EventCallback<Employee> OnEditModal { get; set; }
+	public EventCallback<Customer> OnEditModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Employee> OnRemoveModal { get; set; }
+	public EventCallback<Customer> OnRemoveModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Employee> OnInfoModal { get; set; }
+	public EventCallback<Customer> OnInfoModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Employee> OnDeleteModal { get; set; }
+	public EventCallback<Customer> OnDeleteModal { get; set; }
 
 	[Parameter]
-	public EventCallback<Employee> OnRestoreModal { get; set; }
+	public EventCallback<Customer> OnRestoreModal { get; set; }
 
 	[Parameter]
 	public bool ShowTrashed { get; set; } = false;
 
 	private ApplicationDbContext Context = default!;
 
-	private List<Employee>? Employees { get; set; } = null;
+	private List<Customer>? customers { get; set; } = null;
 
-	private List<ToastMessage> ToastMessages = new();
+	public List<ToastMessage> ToastMessages = new();
 
-	private async Task<GridDataProviderResult<Employee>> EmployeesDataProvider(GridDataProviderRequest<Employee> request)
+	private async Task<GridDataProviderResult<Customer>> CustomersDataProvider(GridDataProviderRequest<Customer> request)
 	{
-		if (Employees is null)
+		if (customers is null)
 			await LoadData();
 
-		return await Task.FromResult(request.ApplyTo(Employees!));
+		return await Task.FromResult(request.ApplyTo(customers!));
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -105,21 +105,53 @@ else
 
 	private async Task LoadData()
 	{
-		Context = DbFactory.CreateDbContext();
-		if (ShowTrashed)
+		try
 		{
-			Employees = await Context.Employees.Where(e => e.Deleted != null).ToListAsync();
+			Context = DbFactory.CreateDbContext();
+
+			if (ShowTrashed)
+			{
+				customers = await Context.Customers.Where(p => p.Deleted != null).ToListAsync();
+			}
+			else
+			{
+				customers = await Context.Customers.Where(p => p.Deleted == null).ToListAsync();
+			}
+
+			Context.Dispose();
 		}
-		else
+		catch (Exception ex)
 		{
-			Employees = await Context.Employees.Where(e => e.Deleted == null).ToListAsync();
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Danger,
+				IconName = IconName.ExclamationOctagonFill,
+				Content = @<div>
+					<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+					ERROR
+					<br />
+					@ex.Message
+				</div>
+	});
+			Console.ForegroundColor = ConsoleColor.DarkRed;
+			Console.WriteLine("ERROR -> Unable to load Customers.");
+			Console.WriteLine("\t" + ex.ToString());
+			Console.ForegroundColor = ConsoleColor.White;
 		}
-		Context.Dispose();
+		finally
+		{
+			await Context.DisposeAsync();
+		}
 	}
 
-	public async Task RefreshData(bool showToast)
+	public void Dispose()
 	{
-		Employees = null;
+		Context?.Dispose();
+	}
+
+    public async Task RefreshData(bool showToast)
+    {
+		customers = null;
 		await LoadData();
 
 		if (showToast)
@@ -129,7 +161,7 @@ else
 					IconName = IconName.ArrowClockwise,
 					Content =@<div class="text-white">
 							<Icon Name="IconName.ArrowClockwise" class="me-2"></Icon>
-							Employees Refreshed!
+							Customers Refreshed!
 						   </div>
 				}
 			);

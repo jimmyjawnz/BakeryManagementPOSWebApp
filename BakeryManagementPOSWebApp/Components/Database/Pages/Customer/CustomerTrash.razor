@@ -1,0 +1,69 @@
+﻿@page "/db/customers/trash"
+@using BakeryManagementPOSWebApp.Components.Database.Pages.Customer
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Customer Trash</PageTitle>
+<title>Customer Trash</title>
+<h2>Customer Trash</h2>
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<CustomerModal @ref="customerDeleteModal"
+			   ModalType="ModalViewType.Delete"
+			   OnSubmit="() => customerList.RefreshData(false)" />
+
+<CustomerModal @ref="customerRestoreModal"
+			   ModalType="ModalViewType.Restore"
+			   OnSubmit="() => customerList.RefreshData(false)" />
+
+<CustomerModal @ref="customerInfoModal"
+			  ModalType="ModalViewType.Get"/>
+
+<Button To="db/customers" Color="ButtonColor.Dark" Type="ButtonType.Link" Size="ButtonSize.Large" class="mb-2">Back to Customers</Button>
+
+<CustomerList @ref="customerList"
+	ShowTrashed=true
+		OnDeleteModal="(customer) => ShowRemoveModal(customer)"
+		OnRestoreModal="(customer) => ShowRestoreModal(customer)"
+		OnInfoModal="(customer) => ShowInfoModal(customer)" />
+
+
+
+@code {
+	private ApplicationDbContext? Context { get; set; }
+
+	private CustomerList customerList { get; set; } = default!;
+
+	private CustomerModal customerInfoModal { get; set; } = default!;
+	private CustomerModal customerRestoreModal { get; set; } = default!;
+	private CustomerModal customerDeleteModal { get; set; } = default!;
+	private string ModalTitle { get; set; } = string.Empty;
+
+	private EditContext editContext { get; set; } = default!;
+	private Data.Enities.Customer customer { get; set; } = new();
+
+	private Button RefreshButton { get; set; } = default!;
+
+	private Button submitButton { get; set; } = default!;
+
+	[Authorize(Roles = "Admin")]
+	private async Task ShowRemoveModal(Data.Enities.Customer item)
+	{
+		await customerDeleteModal.Show(item);
+	}
+
+
+	[Authorize(Roles = "Manager,Admin")]
+	private async Task ShowRestoreModal(Data.Enities.Customer item)
+	{
+		await customerRestoreModal.Show(item);
+	}
+
+	private async Task ShowInfoModal(Data.Enities.Customer item)
+	{
+		await customerInfoModal.Show(item);
+	}
+}

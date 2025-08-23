@@ -34,7 +34,7 @@
 }
 else 
 {
-	<List @ref="employeeList"
+	<EmployeeList @ref="employeeList"
 		ShowTrashed=true
 		  OnDeleteModal="(employee) => ShowRemoveModal(employee)"
 		  OnRestoreModal="(employee) => ShowRestoreModal(employee)"
@@ -46,7 +46,7 @@ else
 	private TrashModal deleteModal { get; set; } = default!;
 	private TrashModal restoreModal { get; set; } = default!;
 
-	private List employeeList { get; set; } = default!;
+	private EmployeeList employeeList { get; set; } = default!;
 
 	private EmployeeModal employeeModal { get; set; } = default!;
 	private string ModalTitle { get; set; } = string.Empty;
@@ -62,11 +62,6 @@ else
 	public async Task LoadData()
 	{
 		await employeeList.RefreshData(true);
-	}
-
-	private void RefreshData()
-	{
-		NavigationManager.Refresh(true);
 	}
 
 	[Authorize(Roles = "Manager,Admin")]

@@ -1,9 +1,9 @@
 ﻿
 <Modal @ref="ModalRef" Title="@Title"
-UseStaticBackdrop="true"
-CloseOnEscape="false"
-IsVerticallyCentered="true"
-Size="ModalSize.Large">
+	UseStaticBackdrop="true"
+	CloseOnEscape="false"
+	IsVerticallyCentered="true"
+	Size="ModalSize.Large">
 
 	<BodyTemplate>
 		@if (Type.Equals("trash"))
@@ -53,7 +53,7 @@ Size="ModalSize.Large">
 	public string ObjectName { get; set; } = "Object";
 
 	[Parameter]
-	public EventCallback SubmitMethod { get; set; }
+	public EventCallback OnSubmit { get; set; }
 
 	[Parameter]
 	public string CancelText { get; set; } = "Cancel";
@@ -62,15 +62,14 @@ Size="ModalSize.Large">
 
 	private async Task Submit()
 	{
-		if (Type.Equals("trash"))
+		if (Type.ToLower().Equals("trash"))
 			submitButton.ShowLoading("Moving to trash...");
-		else if (Type.Equals("delete"))
+		else if (Type.ToLower().Equals("delete"))
 			submitButton.ShowLoading("Deleting...");
 		else
 			submitButton.ShowLoading("Restoring...");
 
-		await SubmitMethod.InvokeAsync();
-		await Task.Delay(10);
+		await OnSubmit.InvokeAsync();
 		await Hide();
 	}
 

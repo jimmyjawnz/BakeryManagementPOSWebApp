@@ -1,0 +1,555 @@
+﻿@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@rendermode @(new InteractiveServerRenderMode(false))
+@attribute [StreamRendering]
+
+<Toasts class="p-3" Style="margin-top: 80px;" Messages="ToastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+
+@if (ModalType.Equals(ModalViewType.Get))
+{
+	<Modal @ref="modalRef" Title="Customer Information"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<h3>
+				@SentCustomer.PhoneAndFullName
+			</h3>
+
+			<AuthorizeView Roles="Admin">
+				<div class="row">
+					<label class="col-md-2 col-form-label">ID: </label>
+					<div class="col-md-4">
+						<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.Id" />
+					</div>
+				</div>
+			</AuthorizeView>
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Firstname: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.FirstName" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Lastname: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.LastName" />
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Phone Number: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.PhoneNumber" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Email: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.EmailAddress" />
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Created: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.DateCreated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Last Updated: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.DateUpdated" />
+				</div>
+			</div>
+			<div class="row">
+				<label class="col-md-2 col-form-label">Date Deleted: </label>
+				<div class="col-md-4">
+					<input type="text" readonly="" class="form-control-plaintext" value="@SentCustomer.DateDeleted" />
+				</div>
+			</div>
+
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Update))
+{
+	<Modal @ref="modalRef" Title="@("Edit - " + SentCustomer.FullName)"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="EditCustomer" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Phone number: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.PhoneNumber" Placeholder="000 000-000" />
+						<ValidationMessage For="() => customerDT.PhoneNumber" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Firstname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.FirstName" Placeholder="Enter firstname" />
+						<ValidationMessage For="() => customerDT.FirstName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Lastname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.LastName" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => customerDT.LastName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Email: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.Email" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => customerDT.Email" />
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Save Changes</Button>
+					</div>
+				</div>
+
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Create))
+{
+	<Modal @ref="modalRef" Title="New Customer"
+			UseStaticBackdrop="true"
+			CloseOnEscape="false"
+			IsVerticallyCentered="true"
+			Size="ModalSize.ExtraLarge">
+		<BodyTemplate>
+			<EditForm EditContext="editContext" FormName="AddCustomer" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Phone number: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.PhoneNumber" Placeholder="000 000-000" />
+						<ValidationMessage For="() => customerDT.PhoneNumber" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Firstname: <span class="text-danger">*</span></label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.FirstName" Placeholder="Enter firstname" />
+						<ValidationMessage For="() => customerDT.FirstName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Lastname: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.LastName" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => customerDT.LastName" />
+					</div>
+				</div>
+
+				<div class="form-group row mb-2">
+					<label class="col-md-2 col-form-label">Email: </label>
+					<div class="col-md-10">
+						<TextInput @bind-Value="@customerDT.Email" Placeholder="Enter lastname" />
+						<ValidationMessage For="() => customerDT.Email" />
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<div class="col-md-12">
+						<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+						<Button @ref="submitButton" Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">Create</Button>
+					</div>
+				</div>
+
+			</EditForm>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Trash))
+{
+	<Modal @ref="modalRef" Title="Trash Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Move <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> to trash?</h2>
+			<p>This customer will be put into the trash.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Send to Trash</Button>
+				</div>
+			</div>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Restore))
+{
+	<Modal @ref="modalRef" Title="Restore Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Restore <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> from trash?</h2>
+			<p>This customer will be restored into the system.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Success" Class="float-end me-2">Restore</Button>
+				</div>
+			</div>
+		</BodyTemplate>
+	</Modal>
+}
+else if (ModalType.Equals(ModalViewType.Delete))
+{
+	<Modal @ref="modalRef" Title="Delete Customer"
+		   UseStaticBackdrop="true"
+		   CloseOnEscape="false"
+		   IsVerticallyCentered="true"
+		   Size="ModalSize.Large">
+		<BodyTemplate>
+			<h2>Delete <strong>@customerDT.PhoneNumber (@customerDT.FirstName @customerDT.LastName)</strong> forever?</h2>
+			<p>This customer will be permanently deleted and unable to be recovered.</p>
+			<div class="form-group row">
+				<div class="col-md-12">
+					<Button @onclick="@Hide" Color="ButtonColor.Secondary" Class="float-end me-2">Cancel</Button>
+					<Button @ref="submitButton" @onclick="SubmitTrash" Color="ButtonColor.Danger" Class="float-end me-2">Delete</Button>
+				</div>
+			</div>
+		</BodyTemplate>
+	</Modal>
+}
+
+
+@code {
+	[Parameter]
+	public ModalViewType ModalType { get; set; }
+
+	[Parameter]
+	public Customer SentCustomer { get; set; } = new();
+
+	[Parameter]
+	public EventCallback OnSubmit { get; set; }
+
+	private EditContext editContext { get; set; } = default!;
+	private CustomerDT customerDT { get; set; } = new();
+
+	public Modal modalRef { get; set; } = default!;
+	private Button submitButton { get; set; } = default!;
+
+	private List<ToastMessage> ToastMessages = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		editContext = new(customerDT);
+	}
+
+	public async Task SubmitForm()
+	{
+		var context = DbFactory.CreateDbContext();
+
+		if (ModalType.Equals(ModalViewType.Update))
+		{
+			submitButton.ShowLoading("Updating...");
+			context.Customers.Update(new Customer()
+			{
+				Id = SentCustomer.Id,
+				FirstName = customerDT.FirstName,
+				LastName = customerDT.LastName,
+				PhoneNumber = customerDT.PhoneNumber,
+				EmailAddress = customerDT.Email,
+				LastUpdated = DateTime.Now,
+				Created = SentCustomer.Created,
+				Deleted = SentCustomer.Deleted
+			}).State = EntityState.Modified;
+		}
+		else
+		{
+			submitButton.ShowLoading("Creating...");
+			context.Customers.Add(new Customer()
+			{
+				FirstName = customerDT.FirstName,
+				LastName = customerDT.LastName,
+				PhoneNumber = customerDT.PhoneNumber,
+				EmailAddress = customerDT.Email
+			});
+		}
+
+		try
+		{
+			await context.SaveChangesAsync();
+			await context.DisposeAsync();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!CustomerExists(SentCustomer.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Customer is no longer in the database.
+					</div>
+				}
+				);
+				Console.ForegroundColor = ConsoleColor.DarkRed;
+				Console.WriteLine("ERROR -> Unable to Update: " + SentCustomer.Id + " Customer is no longer in the database.");
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						@ex.Message
+					</div>
+				}
+				);
+				throw;
+			}
+		}
+		finally
+		{
+			submitButton.HideLoading();
+		}
+
+		if (ModalType.Equals(ModalViewType.Update))
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Success,
+					IconName = IconName.CheckCircle,
+					Content =@<div class="text-white">
+						<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+						Customer <strong>@customerDT.FirstName @customerDT.LastName</strong> Updated!
+					</div>
+				}
+			);
+		else
+			ToastMessages.Add(new()
+				{
+					Type = ToastType.Success,
+					IconName = IconName.CheckCircle,
+					Content =@<div class="text-white">
+						<Icon Name="IconName.CheckCircle" class="me-2"></Icon>
+						Customer <strong>@customerDT.FirstName @customerDT.LastName</strong> Created!
+					</div>
+	}
+			);
+
+
+		await OnSubmit.InvokeAsync();
+		await Hide();
+	}
+
+	public async Task SubmitTrash()
+	{
+		var context = DbFactory.CreateDbContext();
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			submitButton.ShowLoading("Trashing...");
+			context.Customers.Update(new Customer()
+				{
+					Id = SentCustomer.Id,
+					FirstName = SentCustomer.FirstName,
+					LastName = SentCustomer.LastName,
+					PhoneNumber = SentCustomer.PhoneNumber,
+					EmailAddress = SentCustomer.EmailAddress,
+					LastUpdated = SentCustomer.LastUpdated,
+					Created = SentCustomer.Created,
+					Deleted = DateTime.Now
+				}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Restore))
+		{
+			submitButton.ShowLoading("Restoring...");
+			context.Customers.Update(new Customer()
+			{
+				Id = SentCustomer.Id,
+				FirstName = SentCustomer.FirstName,
+				LastName = SentCustomer.LastName,
+				PhoneNumber = SentCustomer.PhoneNumber,
+				EmailAddress = SentCustomer.EmailAddress,
+				LastUpdated = SentCustomer.LastUpdated,
+				Created = SentCustomer.Created,
+				Deleted = null
+			}).State = EntityState.Modified;
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			submitButton.ShowLoading("Deleting...");
+			context.Customers.Remove(new Customer()
+			{
+				Id = SentCustomer.Id
+			});
+		}
+
+		try
+		{
+			await context.SaveChangesAsync();
+			await context.DisposeAsync();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			if (!CustomerExists(SentCustomer.Id))
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+						Unable to update as Customer is no longer in the database.
+					</div>
+				}
+				);
+				Console.ForegroundColor = ConsoleColor.DarkRed;
+				Console.WriteLine("ERROR -> Unable to Update: " + SentCustomer.Id + " Customer is no longer in the database.");
+				Console.WriteLine("\t" + ex.ToString());
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			else
+			{
+				ToastMessages.Add(new()
+				{
+					Type = ToastType.Danger,
+					IconName = IconName.ExclamationOctagonFill,
+					Content = @<div>
+						<Icon Name="IconName.ExclamationOctagonFill" class="me-2"></Icon>
+						ERROR
+						<br />
+					@ex.Message
+					</div>
+				});
+				throw;
+			}
+		}
+		finally
+		{
+			submitButton.HideLoading();
+		}
+
+		if (ModalType.Equals(ModalViewType.Trash))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Warning,
+				IconName = IconName.TrashFill,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.TrashFill" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Trashed!
+				</div>
+			});
+		}
+		else if(ModalType.Equals(ModalViewType.Restore))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Success,
+				IconName = IconName.ArrowCounterclockwise,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.ArrowCounterclockwise" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Restored!
+				</div>
+			});
+		}
+		else if (ModalType.Equals(ModalViewType.Delete))
+		{
+			ToastMessages.Add(new()
+			{
+				Type = ToastType.Danger,
+				IconName = IconName.FileEarmarkX,
+				Content =@<div class="text-white">
+					<Icon Name="IconName.FileEarmarkX" class="me-2"></Icon>
+					Customer <strong>@SentCustomer.FullName</strong> Deleted!
+				</div>
+			});
+		}
+
+		await OnSubmit.InvokeAsync();
+		await Hide();
+	}
+
+	private bool CustomerExists(int id)
+	{
+		using var context = DbFactory.CreateDbContext();
+		return context.Customers.Any(e => e.Id == id);
+	}
+
+	public async Task Show(Customer customer)
+	{
+		SentCustomer = customer;
+
+		customerDT = new()
+		{
+			FirstName = customer.FirstName,
+			LastName = customer.LastName,
+			PhoneNumber = customer.PhoneNumber,
+			Email = customer.EmailAddress
+		};
+
+		editContext = new(customerDT);
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Show()
+	{
+		customerDT = new();
+		editContext = new(customerDT);
+		await modalRef.ShowAsync();
+	}
+
+	public async Task Hide()
+	{
+		await modalRef.HideAsync();
+	}
+
+	public class CustomerDT
+	{
+		[Required(ErrorMessage = "Firstname is required.")]
+		[StringLength(50, ErrorMessage = "Firstname is too long.")]
+		public string? FirstName { get; set; } = string.Empty;
+
+		[StringLength(50, ErrorMessage = "Lastname is too long.")]
+		public string? LastName { get; set; } = string.Empty;
+
+		[Phone(ErrorMessage = "Phone number is not the correct format.")]
+		[Required(ErrorMessage = "Phone number is required.")]
+		[StringLength(15, ErrorMessage = "Phone number is not the correct format.")]
+		public string PhoneNumber { get; set; } = string.Empty;
+
+		public string? Email { get; set; } = string.Empty;
+	}
+}
