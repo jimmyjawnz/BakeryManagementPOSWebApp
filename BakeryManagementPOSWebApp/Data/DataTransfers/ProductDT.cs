@@ -5,20 +5,15 @@ namespace BakeryManagementPOSWebApp.Data.DataTransfers
 {
     public class ProductDT
     {
-        public int? ID { get; set; }
-
-        [Required(ErrorMessage = "Product name is required.")]
         [StringLength(100, ErrorMessage = "Product name is too long.")]
-        public string? Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Product price is required.")]
+        [DataType(DataType.Currency)]
         [Range(0.00d, 999.99d, ErrorMessage = "Price needs to be between 0.00 and 1000.00.")]
-        public decimal? Price { get; set; }
+        public decimal Price { get; set; } = 0.00m;
 
-        public string? Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
-        public bool? Availability { get; set; }
-
-        public ICollection<OrderItem>? OrderItems { get; set; } = [];
+        public bool Availability { get; set; } = true;
     }
 }

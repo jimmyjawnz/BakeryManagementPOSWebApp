@@ -15,14 +15,14 @@ namespace BakeryManagementPOSWebApp.Data.Enities
         [Required]
         [DataType(DataType.Currency)]
         [Column("product_price", Order = 3, TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; } = 0.00m;
+        public decimal Price { get; set; }
 
         [Column("product_description", Order = 4, TypeName = "nvarchar(max)")]
         public string? Description { get; set; }
 
         [Required]
         [Column("product_availability", Order = 1, TypeName = "bit")]
-        public bool IsAvailable { get; set; } = true;
+        public bool IsAvailable { get; set; }
 
         // Relational value for OrderItems
         public ICollection<OrderItem> OrderItems { get; } = [];
